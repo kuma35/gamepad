@@ -63,6 +63,64 @@
     <script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
     <script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
+  <style type="text/css">
+    .yumbo-container {
+    display:inline-block;
+    height:320px;
+    width:320px;
+    background-color:#ffffff;
+    border:1px sold #0000000
+    }
+    .yumbo-whitebox {
+    display:inline-block;
+    height:100px;
+    width:100px;
+    background-color:#ffffff;
+    }
+    .yumbo-center {
+    display:inline-block;
+    height:100px;
+    width:100px;
+    background-color:#f8b500;
+    border-radius:50%;
+    }
+    .yumbo-arrow-up {
+    display:inline-block;
+    width:0;
+    height:0;
+    border-left:50px solid transparent;
+    border-right:50px solid transparent;
+    border-bottom:100px solid #f8b500;
+    filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
+    }
+    .yumbo-arrow-left {
+    display:inline-block;
+    width:0;
+    height:0;
+    border-top:50px solid transparent;
+    border-bottom:50px solid transparent;
+    border-right:100px solid #f8b500;
+    filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
+    }
+    .yumbo-arrow-right {
+    display:inline-block;
+    width:0;
+    height:0;
+    border-top:50px solid transparent;
+    border-bottom:50px solid transparent;
+    border-left:100px solid #f8b500;
+    filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
+    }
+    .yumbo-arrow-down {
+    display:inline-block;
+    width:0;
+    height:0;
+    border-left:50px solid transparent;
+    border-right:50px solid transparent;
+    border-top:100px solid #f8b500;
+    filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
+    }
+  </style>
 </head>
 <body>
 
@@ -117,7 +175,7 @@
             </div>
             <div class="panel-body">
 	      <ul clas="list-group" id="select-gamepad">
-		<!-- initial empty. replace by javascript -->
+		<p>Connect gamepad your machine and move axis or press button.</p>
 	      </div
             </div>
           </div>
@@ -129,7 +187,7 @@
 	<div class="col-md-12">
           <div class="panel panel-primary">
             <div class="panel-heading">
-	      <h3 class="panel-title">gamepad info</h3>
+	      <h3 class="panel-title">ゲームパッド情報</h3>
             </div>
             <div class="panel-body" id="gamepad-info">
 	      <!-- initial empty. replace by javascript -->
@@ -143,10 +201,49 @@
 	<div class="col-md-12">
           <div class="panel panel-primary">
             <div class="panel-heading">
-	      <h3 class="panel-title">attach function</h3>
+	      <h3 class="panel-title">操作割り当て - JIS(ISO)</h3>
             </div>
             <div class="panel-body">
-	      <p>attach function and caribrate.</p>
+	      <div class="yumbo-container" id="yumbo-control-left">
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-up text-center">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-left">
+		</div>
+		<div class="yumbo-center">
+		</div>
+		<div class="yumbo-arrow-right">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-down">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+	      </div>
+	      <div class="yumbo-container" id="yumbo-control-right">
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-up">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-left">
+		</div>
+		<div class="yumbo-center">
+		</div>
+		<div class="yumbo-arrow-right">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+		<div class="yumbo-arrow-down">
+		</div>
+		<div class="yumbo-whitebox">
+		</div>
+	      </div>
             </div>
           </div>
 	</div>
@@ -157,21 +254,7 @@
 	<div class="col-md-12">
           <div class="panel panel-primary">
             <div class="panel-heading">
-	      <h3 class="panel-title">command pattern</h3>
-            </div>
-            <div class="panel-body">
-	      <p>JIS(ISO), Komatu, etc.</p>
-            </div>
-          </div>
-	</div>
-      </div>
-    </div>   <!-- /row -->
-    <div class="row">
-      <div class="bs-component">
-	<div class="col-md-12">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-	      <h3 class="panel-title">get control!!</h3>
+	      <h3 class="panel-title">Get cotnrol !!</h3>
             </div>
             <div class="panel-body">
 	      <p>wait and get control.</p>

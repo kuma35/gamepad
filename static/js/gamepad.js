@@ -4,6 +4,9 @@
 //  ref:https://developer.mozilla.org/en-US/docs/Web/Guide/API/Gamepad
 //---------------------------------------------------------------------
 
+var StrSelectGamepad = '<p>PCにゲームパッド(ジョイスティック)を接続して下さい。アナログスティックを操作するかボタンを押すと認識します。</p>'
+var StrGamepadInfo = '';
+
 //Create AnimationFrame
 var rAF = window.mozRequestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
@@ -12,16 +15,22 @@ var rAF = window.mozRequestAnimationFrame ||
 //Update
 function scanGamepads() {
     var pads = navigator.getGamepads ? navigator.getGamepads() :
-                   (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+        (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+
+    if (!pads) {
+	$("#select-gamepad").html(StrSelectGamepad);
+	$("#gamepad-info").html(StrGamepadInfo);
+	rAF(scanGamepads);
+	return;
+    }
 
     //gamepad id list
     var last_id_list_html = $("#select-gamepad").html();
-    var id_list_html = '';
-
+    var id_list_html = StrSelectGamepad;
     if (pads[0]) {
-	id_list_html += '<li class="list-group-item active">';
+	id_list_html = '<li class="list-group-item active">';
 	id_list_html += pads[0].id;
-	    id_list_html += '</li>';
+	id_list_html += '</li>';
     }
     for(var i=1; i<pads.length; i++){
 	if (pads[i]) {
@@ -33,11 +42,11 @@ function scanGamepads() {
     if (id_list_html != last_id_list_html) {
 	$("#select-gamepad").html(id_list_html);
     }
-
+    
     // id 0's info :-)
     var target = 0;
+    var info_html = StrGamepadInfo;
     if (pads[target]) {
-	var info_html = '';
 	info_html += '<ul class="list-inline">';
 	for (i=0;i<pads[target].axes.length;i++) {
 	    info_html += '<li>';
@@ -46,7 +55,7 @@ function scanGamepads() {
 	    info_html += '</li>';
 	}
 	info_html += '</ul>';
-
+	
 	info_html += '<ul class="list-inline">';
 	for(i=0;i<pads[target].buttons.length;i++) {
 	    var val = pads[target].buttons[i];
@@ -59,13 +68,17 @@ function scanGamepads() {
 	    info_html += '<span class="label label-primary">BUTTON '+i+'</span>';
 	    info_html += '<span class="label label-default">'+val+'</span>';
 	    info_html += '</li>';
-	}
+	    }
 	info_html += '</ul>';
-	var last_info_html = $("#gamepad-info").html();
-	if (info_html != last_info_html) {
-	    $("#gamepad-info").html(info_html);
-	}
     }
+    var last_info_html = $("#gamepad-info").html();
+    if (info_html != last_info_html) {
+	$("#gamepad-info").html(info_html);
+    }
+
+    // attach function
+
+    
     rAF(scanGamepads);
 }
 
