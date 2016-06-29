@@ -66,21 +66,49 @@
   <style type="text/css">
     .yumbo-container {
     display:inline-block;
-    height:320px;
-    width:320px;
+    width:270px;
+    height:160px;
+    background-color:#ffffff;
+    border:1px sold #0000000
+    }
+    .yumbo-updown-label {
+    display:inline-block;
+    width:270px;
+    background-color:#ffffff;
+    border:1px sold #0000000;
+    text-align: center
+    }
+    .yumbo-left-label {
+    display:inline-block;
+    width:50px;
+    background-color:#ffffff;
+    border:1px sold black;
+    text-align: right
+    }
+    .yumbo-right-label {
+    display:inline-block;
+    width:50px;
+    background-color:#ffffff;
+    border:1px sold #0000000;
+    text-align: left
+    }
+    .yumbo-mark-container {
+    display:inline-block;
+    width:160px;
+    height:110px;
     background-color:#ffffff;
     border:1px sold #0000000
     }
     .yumbo-whitebox {
     display:inline-block;
-    height:100px;
-    width:100px;
+    width:50px;
+    height:50px;
     background-color:#ffffff;
     }
-    .yumbo-center {
+    .yumbo-circle {
     display:inline-block;
-    height:100px;
-    width:100px;
+    width:50px;
+    height:50px;
     background-color:#f8b500;
     border-radius:50%;
     }
@@ -88,36 +116,36 @@
     display:inline-block;
     width:0;
     height:0;
-    border-left:50px solid transparent;
-    border-right:50px solid transparent;
-    border-bottom:100px solid #f8b500;
+    border-left:25px solid transparent;
+    border-right:25px solid transparent;
+    border-bottom:50px solid #f8b500;
     filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
     }
     .yumbo-arrow-left {
     display:inline-block;
     width:0;
     height:0;
-    border-top:50px solid transparent;
-    border-bottom:50px solid transparent;
-    border-right:100px solid #f8b500;
+    border-top:25px solid transparent;
+    border-bottom:25px solid transparent;
+    border-right:50px solid #f8b500;
     filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
     }
     .yumbo-arrow-right {
     display:inline-block;
     width:0;
     height:0;
-    border-top:50px solid transparent;
-    border-bottom:50px solid transparent;
-    border-left:100px solid #f8b500;
+    border-top:25px solid transparent;
+    border-bottom:25px solid transparent;
+    border-left:50px solid #f8b500;
     filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
     }
     .yumbo-arrow-down {
     display:inline-block;
     width:0;
     height:0;
-    border-left:50px solid transparent;
-    border-right:50px solid transparent;
-    border-top:100px solid #f8b500;
+    border-left:25px solid transparent;
+    border-right:25px solid transparent;
+    border-top:50px solid #f8b500;
     filter:drop-shadow(2px 2px 1px rgba(0,0,0,0.5));
     }
   </style>
@@ -204,45 +232,56 @@
 	      <h3 class="panel-title">操作割り当て - JIS(ISO)</h3>
             </div>
             <div class="panel-body">
-	      <div class="yumbo-container" id="yumbo-control-left">
-		<div class="yumbo-whitebox">
+	      <div class="yumbo-container">
+		<div class="yumbo-updown-label">アーム伸ばし</div>
+		<div class="yumbo-left-label">左旋回</div>
+		<div class="yumbo-mark-container" id="yumbo-control-left">
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-up text-center"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-left"></div>
+		  <div class="yumbo-circle"></div>
+		  <div class="yumbo-arrow-right"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-down"></div>
+		  <div class="yumbo-whitebox"></div>
 		</div>
-		<div class="yumbo-arrow-up text-center">
-		</div>
-		<div class="yumbo-whitebox">
-		</div>
-		<div class="yumbo-arrow-left">
-		</div>
-		<div class="yumbo-center">
-		</div>
-		<div class="yumbo-arrow-right">
-		</div>
-		<div class="yumbo-whitebox">
-		</div>
-		<div class="yumbo-arrow-down">
-		</div>
-		<div class="yumbo-whitebox">
-		</div>
+		<div class="yumbo-right-label">右旋回</div>
+		<div class="yumbo-updown-label">アーム曲げ</div>
 	      </div>
-	      <div class="yumbo-container" id="yumbo-control-right">
-		<div class="yumbo-whitebox">
+	      <div class="yumbo-container">
+		<div class="yumbo-updown-label">ブーム下し</div>
+		<div class="yumbo-left-label">掘削</div>
+		<div class="yumbo-mark-container" id="yumbo-control-right">
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-up"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-left"></div>
+		  <div class="yumbo-circle"></div>
+		  <div class="yumbo-arrow-right"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-down"></div>
+		  <div class="yumbo-whitebox"></div>
 		</div>
-		<div class="yumbo-arrow-up">
+		<div class="yumbo-right-label">開放</div>
+		<div class="yumbo-updown-label">ブーム上げ</div>
+	      </div>
+	      <div class="yumbo-container">
+		<div class="yumbo-updown-label"></div>
+		<div class="yumbo-left-label">バ左転</div>
+		<div class="yumbo-mark-container" id="yumbo-control-extra">
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-arrow-left"></div>
+		  <div class="yumbo-circle"></div>
+		  <div class="yumbo-arrow-right"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-whitebox"></div>
+		  <div class="yumbo-whitebox"></div>
 		</div>
-		<div class="yumbo-whitebox">
-		</div>
-		<div class="yumbo-arrow-left">
-		</div>
-		<div class="yumbo-center">
-		</div>
-		<div class="yumbo-arrow-right">
-		</div>
-		<div class="yumbo-whitebox">
-		</div>
-		<div class="yumbo-arrow-down">
-		</div>
-		<div class="yumbo-whitebox">
-		</div>
+		<div class="yumbo-right-label">バ右転</div>
+		<div class="yumbo-updown-label"></div>
 	      </div>
             </div>
           </div>
