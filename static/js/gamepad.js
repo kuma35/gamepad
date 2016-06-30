@@ -39,9 +39,14 @@ Function.method('curry', function () {
 
 const StrSelectGamepad = '<p>PCにゲームパッド(ジョイスティック)を接続して下さい。アナログスティックを操作するかボタンを押すと認識します。</p>'
 let StrGamepadInfo = '';
-let TargetPad = -1;
-let FocusPad = -1;
+let TargetPad = {
+    'index': -1,
+    'id':'',
+};
 let ArrowAjax = true;
+const rAF = window.mozRequestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.requestAnimationFrame;
 let Map = {
     'gamepad_id': '',
     'session_id': '',	// get session id from server.
@@ -100,8 +105,16 @@ let Map = {
     },
 };
 
-$('#select-gamepad').on('click', '.list-group-item', function(e) {
-    TargetPad = this.id;
+$(window).on('gamepadconnected gamepaddisconnected', list_gamepads);
+//$(window).on('gamepaddisconnected', list_gamepads);
+$('#select-gamepad').on('click', '.list-group-item', function() {
+    'use strict';
+    TargetPad.index = this.id;
+    TargetPad.id = $(this).text();
+    $('#select-gamepad .list-group-item').each(function (i, e) {
+	$(e).removeClass("active");
+    });
+    $(this).addClass("active");
 });
 
 //$('.list-group-item').focusin( function(e) {FocusPad = this.id;})
@@ -130,28 +143,28 @@ function default_generic_pad(map) {
 }
 
 //code here
-function list_gamepad(pads) {
+function list_gamepads() {
     'use strict';
-    let last_id_list_html = $("#select-gamepad").html();
-    let id_list_html = StrSelectGamepad;
-    id_list_html = '';
-    for(let i=0; i<pads.length; i++){
-	if (pads[i]) {
-	    if (i == TargetPad) {
-		id_list_html += '<li id="'+i+'" class="list-group-item active">';
+    let pads = navigator.getGamepads ? navigator.getGamepads() :
+	(navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+    if (pads) {
+	let id_list_html = '';
+	for(let i=0; i<pads.length; i++){
+	    if (pads[i] && pads[i].connected) {
+		if (TargetPad.index == i &&
+		    TargetPad.id == pads[i].id) {
+		    id_list_html += '<a id="'+i+'" class="list-group-item active">'+pads[i].id+'</a>';
+		} else {
+		    id_list_html += '<a id="'+i+'" class="list-group-item">'+pads[i].id+'</a>';
+		}
 	    } else {
-		id_list_html += '<li id="'+i+'" class="list-group-item">';
-	    }
-	    id_list_html += pads[i].id;
-	    id_list_html += '</li>';
-	} else {
-	    id_list_html += '<li id="'+i+'" class="list-group-item disabled"></li>';
-	    if ( i == TargetPad) {
-		TargetPad = -1;
+		id_list_html += '<a id="'+i+'" class="list-group-item disabled"></a>';
+		if ( i == TargetPad.index) {
+		    TargetPad.index = -1;
+		    TargetPad.id = '';
+		}
 	    }
 	}
-    }
-    if (id_list_html != last_id_list_html) {
 	$("#select-gamepad").html(id_list_html);
     }
 }
@@ -192,16 +205,12 @@ function info_gamepad(pad) {
 
 
 //Create AnimationFrame
-const rAF = window.mozRequestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.requestAnimationFrame;
 
 //Update
 function scanGamepads() {
     'use strict';
     let pads = navigator.getGamepads ? navigator.getGamepads() :
-        (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
-
+	(navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
     if (!pads) {
 	$("#select-gamepad").html(StrSelectGamepad);
 	$("#gamepad-info").html(StrGamepadInfo);
@@ -209,14 +218,13 @@ function scanGamepads() {
 	return;
     }
 
-    list_gamepad(pads);
-    if (TargetPad > -1) {
-	info_gamepad(pads[TargetPad]);
+    if (TargetPad.index > -1) {
+	info_gamepad(pads[TargetPad.index]);
 	if (Map.gamepad_id != '') {
 	    Map && Map.send();	// if need, send control data to server.
 	} else {
-	    create_map(Map, pads[TargetPad]);
-	    console.log(Map);
+	    create_map(Map, pads[TargetPad.index]);
+	    //console.log(Map);
 	}
     } else {
 	info_gamepad(null);
