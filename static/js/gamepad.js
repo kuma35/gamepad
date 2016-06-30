@@ -42,7 +42,63 @@ let StrGamepadInfo = '';
 let TargetPad = -1;
 let FocusPad = -1;
 let ArrowAjax = true;
-let Maps = [];
+let Map = {
+    'gamepad_id': '',
+    'session_id': '',	// get session id from server.
+    'controls' : {
+	turn: 0.0,
+	beam: 0.0,
+	arm: 0.0,
+	backet: 0.0,
+	turn_backet: 0.0,
+    },
+    'controls_old' : {
+	turn: 0.0,
+	beam: 0.0,
+	arm: 0.0,
+	backet: 0.0,
+	turn_backet: 0.0,
+    },
+    'set_turn' : function(value) {
+	'use strict';
+	this.controls.turn = value;
+    },
+    'set_beam' : function(value) {
+	'use strict';
+	this.controls.beam = value;
+    },
+    'set_arm' : function(value) {
+	'use strict';
+	this.controls.arm = value;
+    },
+    'set_backet' : function(value) {
+	'use strict';
+	this.controls.backet = value;
+    },
+    'set_turn_backet' : function(value) {
+	'use strict';
+	this.controls.turn_backet = value;
+    },
+    'send' : function () {
+	'use strict';
+	if (this.controls_old.turn !== this.controls.turn ||
+	    this.controls_old.beam !== this.controls.beam ||
+	    this.controls_old.arm !== this.controls.arm ||
+	    this.controls_old.backet !== this.controls.backet ||
+	    this.controls_old.turn_backet !== this.controls.turn_backet) {
+	    // send data to server
+	    if (AllowAjax) {
+		$.ajax().done().fail();
+	    }
+	    // update controls_old
+	    this.controls_old.turn = this.controlsturn;
+	    this.controls_old.beam = this.controls.beam;
+	    this.controls_old.arm = this.controls.arm;
+	    this.controls_old.backet = this.controls.backet;
+	    this.controls_old.turn_backet = this.controls.turn_backet;
+	}
+    },
+};
 
 $('#select-gamepad').on('click', '.list-group-item', function(e) {
     TargetPad = this.id;
@@ -51,67 +107,13 @@ $('#select-gamepad').on('click', '.list-group-item', function(e) {
 //$('.list-group-item').focusin( function(e) {FocusPad = this.id;})
 //    .focusout( function(e) {FocusPad = -1;});
 
-function create_maps(maps, pads) {
+function create_map(map, pad) {
     'use strict';
-    for (let i = 0; i < pads.length; i++) {
-	maps[i] = Object.create(pads[i]);
-	maps[i].session_id = '';	// get session id from server.
-	maps[i].axes_func = new Array(pads[i].axes.length);
-	maps[i].buttons_func = new Array(pads[i].buttons.length);
-	maps[i].controls = {
-	    turn: 0.0,
-	    beam: 0.0,
-	    arm: 0.0,
-	    backet: 0.0,
-	    turn_backet: 0.0,
-	};
-	maps[i].controls_old = {
-	    turn: 0.0,
-	    beam: 0.0,
-	    arm: 0.0,
-	    backet: 0.0,
-	    turn_backet: 0.0,
-	};
-	maps[i].set_turn = function(value) {
-	    'use strict';
-	    this.controls.turn = value;
-	};
-	maps[i].set_beam = function(value) {
-	    'use strict';
-	    this.controls.beam = value;
-	};
-	maps[i].set_arm = function(value) {
-	    'use strict';
-	    this.controls.arm = value;
-	};
-	maps[i].set_backet = function(value) {
-	    'use strict';
-	    this.controls.backet = value;
-	};
-	maps[i].set_turn_backet = function(value) {
-	    'use strict';
-	    this.controls.turn_backet = value;
-	};
-	maps[i].send = function () {
-	    'use strict';
-	    if (this.controls_old.turn !== this.controlsturn ||
-		this.controls_old.beam !== this.controls.beam ||
-		this.controls_old.arm !== this.controls.arm ||
-		this.controls_old.backet !== this.controls.backet ||
-		this.controls_old.turn_backet !== this.controls.turn_backet) {
-		// send data to server
-		if (AllowAjax) {
-		    $.ajax().done().fail();
-		}
-		// update controls_old
-		this.controls_old.turn = this.controlsturn;
-		this.controls_old.beam = this.controls.beam;
-		this.controls_old.arm = this.controls.arm;
-		this.controls_old.backet = this.controls.backet;
-		this.controls_old.turn_backet = this.controls.turn_backet;
-	    }
-	};
-    } // for
+    map.prototype = pad;
+    map.gamepad_id = map.prototype.id;
+    //map.gamepad_id = pad.id;
+    map.axes_func = new Array(pad.axes.length);
+    map.buttons_func = new Array(pad.buttons.length);
 }
 
 function default_generic_pad(map) {
@@ -137,13 +139,16 @@ function list_gamepad(pads) {
 	if (pads[i]) {
 	    if (i == TargetPad) {
 		id_list_html += '<li id="'+i+'" class="list-group-item active">';
-//	    } else if (i == FocusPad) {
-//		id_list_html += '<li id="'+i+'" class="list-group-item list-group-item-success">';
 	    } else {
 		id_list_html += '<li id="'+i+'" class="list-group-item">';
 	    }
 	    id_list_html += pads[i].id;
 	    id_list_html += '</li>';
+	} else {
+	    id_list_html += '<li id="'+i+'" class="list-group-item disabled"></li>';
+	    if ( i == TargetPad) {
+		TargetPad = -1;
+	    }
 	}
     }
     if (id_list_html != last_id_list_html) {
@@ -207,16 +212,16 @@ function scanGamepads() {
     list_gamepad(pads);
     if (TargetPad > -1) {
 	info_gamepad(pads[TargetPad]);
+	if (Map.gamepad_id != '') {
+	    Map && Map.send();	// if need, send control data to server.
+	} else {
+	    create_map(Map, pads[TargetPad]);
+	    console.log(Map);
+	}
+    } else {
+	info_gamepad(null);
     }
-
-    //if (!Maps) {
-//	create_maps(Maps, pads);
-//	// attach default function by gamepad-id or generic.
-//    } else if (TargetPad >=0 ){
-//	Maps && Maps[TargetPad].send();	// if need, send control data to server.
-//    } else {
-//    }
-   
+    
     rAF(scanGamepads);
 }
 
