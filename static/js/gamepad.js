@@ -169,7 +169,7 @@ function info_gamepad(pad) {
 	for (let i=0;i<pad.axes.length;i++) {
 	    info_html += '<li>';
 	    info_html += '<span class="label label-primary gamepad-axis">AXIS '+i+'</span>';
-	    info_html += '<span class="label label-default gamepad-axis">'+pad.axes[i].toFixed(5)+'</span>';
+	    info_html += '<span class="label label-default gamepad-axis" id="'+i+'">'+pad.axes[i].toFixed(5)+'</span>';
 	    info_html += '<span class="label label-success gamepad-axis gamepad-axis-ctrl">(割付無)</span>';
 	    info_html += '</li>';
 	}
@@ -185,7 +185,7 @@ function info_gamepad(pad) {
 	    }
 	    info_html += '<li>';
 	    info_html += '<span class="label label-primary gamepad-button">BUTTON '+i+'</span>';
-	    info_html += '<span class="label label-default gamepad-button">'+val+'</span>';
+	    info_html += '<span class="label label-default gamepad-button" id="'+i+'">'+val+'</span>';
 	    info_html += '<span class="label label-success gamepad-button gamepad-button-ctrl">(割付無)</span>';
 	    info_html += '</li>';
 	    }
