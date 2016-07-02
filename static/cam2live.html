@@ -185,7 +185,7 @@
         <div class="bs-component">
           <div class="jumbotron">
             <h1>Cam2 Live - 鉄空小娘ライブカメラ</h1>
-            <p>カメラ2のコントロールとライブ画像の表示を行います。</p>
+            <p>カメラ2をゲームパッドでコントロールし、ライブ画像の表示を行います。</p>
           </div>
         </div>
       </div>
@@ -203,7 +203,8 @@
             </div>
             <div class="panel-body">
 	      <div clas="list-group" id="select-gamepad">
-		<p>Connect gamepad your machine and move axis or press button.</p>
+		<p>PCにゲームパッド(ジョイスティック)を接続して下さい。アナログスティックを操作するかボタンを押すと認識します。</p>
+		<p>FireFoxとChromeでは動作しました。Microsoft EdgeとInternet Explorerでは動作しません。</p>
 	      </div>
             </div>
           </div>
@@ -237,7 +238,7 @@
 		<div class="yumbo-left-label">左旋回</div>
 		<div class="yumbo-mark-container" id="yumbo-control-left">
 		  <div class="yumbo-whitebox"></div>
-		  <div class="yumbo-arrow-up text-center"></div>
+		  <div class="yumbo-arrow-up"></div>
 		  <div class="yumbo-whitebox"></div>
 		  <div class="yumbo-arrow-left"></div>
 		  <div class="yumbo-circle"></div>
@@ -312,7 +313,96 @@
     </div>   <!-- /row -->
   </div>
 </div>
-
+<!-- モーダル・ダイアログ -->
+<div class="modal fade" id="axis-control-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+	<h4 class="modal-title">操作割付 - アナログ軸</h4>
+      </div>
+      <div class="modal-body">
+	<div class="bs-component">
+	  <div class="col-md-12">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+		<h3 class="panel-title">操作選択</h3>
+              </div>
+              <div class="panel-body">
+		<div clas="list-group" id="select-axis-control">
+		  <a class="list-group-item">(割付無)</a>
+		  <a class="list-group-item">旋回</a>
+		  <a class="list-group-item">ブーム上げ下ろし</a>
+		  <a class="list-group-item">アーム伸ばし曲げ</a>
+		  <a class="list-group-item">バケット掘削開放</a>
+		  <a class="list-group-item">バケット回転</a>
+		</div>
+              </div>
+            </div>
+	  </div><!-- col-md-12 -->
+	  <div class="col-md-12">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+		<h3 class="panel-title">ノーマル／リバース</h3>
+              </div>
+              <div class="panel-body">
+		<div clas="list-group" id="select-axis-control">
+		  <a class="list-group-item">ノーマル</a>
+		  <a class="list-group-item">リバース</a>
+		</div>
+              </div>
+            </div>
+	  </div><!-- col-md-12 -->
+	</div><!-- bs-component -->
+      </div>
+      <div class="modal-footer">
+	<button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
+	<button type="button" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- モーダル・ダイアログ -->
+<div class="modal fade" id="button-control-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+	<h4 class="modal-title">操作割付 - ボタン</h4>
+      </div>
+      <div class="modal-body">
+	<div class="bs-component">
+	  <div class="col-md-12">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+		<h3 class="panel-title">操作選択</h3>
+              </div>
+              <div class="panel-body">
+		<div clas="list-group" id="select-button-control">
+		  <a class="list-group-item">(割付無)</a>
+		  <a class="list-group-item">左旋回</a>
+		  <a class="list-group-item">右旋回</a>
+		  <a class="list-group-item">アーム伸ばし</a>
+		  <a class="list-group-item">アーム曲げ</a>
+		  <a class="list-group-item">ブーム下ろし</a>
+		  <a class="list-group-item">ブーム上げ</a>
+		  <a class="list-group-item">バケット掘削</a>
+		  <a class="list-group-item">バケット開放</a>
+		  <a class="list-group-item">バケット左回転</a>
+		  <a class="list-group-item">バケット右回転</a>
+		</div>
+              </div>
+            </div>
+	  </div><!-- col-md-12 -->
+	</div><!-- bs-component -->
+      </div>
+      <div class="modal-footer">
+	<button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
+	<button type="button" class="btn btn-primary">ボタン</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script type="text/javascript">
