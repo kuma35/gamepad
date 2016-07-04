@@ -93,12 +93,6 @@ $('#select-gamepad').on('click', '.list-group-item', function() {
 	(navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
     info_gamepad(pads[TargetPad.index]);
 });
-//$('#gamepad-info').on('click', '.gamepad-axis', function() {
-//    $('#axis-control-modal').modal();
-//});
-//$('#gamepad-info').on('click', '.gamepad-button', function() {
-//    $('#button-control-modal').modal();
-//});
 $('#axis-control-modal').on('show.bs.modal', function(e) {
     'use strict';
     let index = $(e.relatedTarget).data('index');
@@ -111,12 +105,17 @@ $('#axis-control-modal').on('show.bs.modal', function(e) {
 	let term = Map.ctrl.axis[index].name.split('-');
 	if (term[0]) {
 	    $('#select-axis-control #'+term[0]).addClass("active");
+	} else {
+	    $('#select-axis-control #none').addClass("active");
 	}
 	if (term[1]) {
 	    $('#select-axis-normal-reverse #'+term[1]).addClass("active");
+	} else {
+	    $('#select-axis-normal-reverse #normal').addClass("active");
 	}
     } else {
 	$('#select-axis-control #none').addClass("active");
+	$('#select-axis-normal-reverse #normal').addClass("active");
     }
     //$('#select-axis-control #'+Map.ctrl.axis[index].name).addClass("active");
 });
@@ -136,10 +135,6 @@ $('#axis-control-modal-ok').on('click', function() {
     if (key != 'none') {
 	key += '_' + nr;
     }
-    console.log(index);
-    console.log(active);
-    console.log(key);
-    console.log(Map[key]);
     let nr_mark = '';
     if (nr == 'reverse') {
 	nr_mark = '(R';
@@ -147,7 +142,6 @@ $('#axis-control-modal-ok').on('click', function() {
     $('#list-axes #'+index).next().text(active.text()+nr_mark);
     Map.ctrl.axis[index] = Map[key];
     $('#axis-control-modal').modal('hide');
-    
 });
 $('#button-control-modal').on('show.bs.modal', function(e) {
     'use strict';
@@ -159,6 +153,8 @@ $('#button-control-modal').on('show.bs.modal', function(e) {
     if( Map.ctrl.btn[index]) {
 	if (Map.ctrl.btn[index].name) {
 	    $('#select-button-control #'+Map.ctrl.btn[index].name).addClass("active");
+	} else {
+	    $('#select-button-control #none').addClass("active");
 	}
     } else {
 	$('#select-button-control #none').addClass("active");
@@ -170,6 +166,11 @@ $('#select-button-control').on('click', '.list-group-item', function() {
     $(this).addClass("active");
 });
 $('#button-control-modal-ok').on('click', function() {
+    let index = $('#button-control-modal .modal-content').attr('id');
+    let active = $('#select-button-control .active');
+    let key = active.attr('id');
+    $('#list-buttons #'+index).next().text(active.text());
+    Map.ctrl.btn[index] = Map[key];
     $('#button-control-modal').modal('hide');
 });
 
@@ -262,22 +263,47 @@ function create_map(map, pad) {
 	'func' : map.backet_turn.curry(1.0, 1.0),
     };
 
+}
+
+function generic_mapping(map, pad) {
     // set default control
     if (pad.axes.length > 0) {
 	map.ctrl.axis[0] = map.turn_normal;
+	set_axis_label(0);
     }
     if (pad.axes.length > 1) {
 	map.ctrl.axis[1] = map.arm_normal;
+	set_axis_label(1);
     }
     if (pad.axes.length > 2) {
 	map.ctrl.axis[2] = map.backet_normal;
+	set_axis_label(2);
     }
     if (pad.axes.length > 3) {
 	map.ctrl.axis[3] = map.beam_normal;
+	set_axis_label(3);
     }
     if (pad.axes.length > 4) {
 	map.ctrl.axis[4] = map.backetturn_normal;
+	set_axis_label(4);
     }
+}
+
+function set_axis_label(index) {
+    'use strict';
+    let label = '';
+    let key = Map.ctrl.axis[index].name;
+    let words = key.split('-');
+    if (words[1] == 'normal' ||
+	words[1] == 'reverse') {
+	label = $('#select-axis-control #'+words[0]).text();
+	if (words[1] == 'reverse') {
+	    label += '(R';
+	}
+    } else {
+	label = $('#select-axis-control #'+key).text();
+    }
+    $('#list-axes #'+index).next().text(label);
 }
 
 //code here
@@ -333,7 +359,7 @@ function info_gamepad(pad) {
 	    info_html += '<li>';
 	    info_html += '<span class="label label-primary gamepad-button" data-toggle="modal" data-target="#button-control-modal" data-index="'+i+'" data-key="button">BUTTON '+i+'</span>';
 	    info_html += '<span class="label label-default gamepad-button" id="'+i+'" data-toggle="modal" data-target="#button-control-modal" data-index="'+i+'" data-key="button">'+val+'</span>';
-	    info_html += '<span class="label label-success gamepad-button" data-toggle="modal" data-target="#button-control-modal" data-index="'+i+'" data-key="BUTTON">(割付無)</span>';
+	    info_html += '<span class="label label-success gamepad-button" data-toggle="modal" data-target="#button-control-modal" data-index="'+i+'" data-key="button">(割付無)</span>';
 	    info_html += '</li>';
 	    }
 	info_html += '</ul>';
@@ -399,12 +425,30 @@ function scanGamepads() {
     }
 
     if (TargetPad.index > -1) {
-	update_gamepad(pads[TargetPad.index]);
+	let pad = pads[TargetPad.index];
+	update_gamepad(pad);
 	if (Map.gamepad_id != '') {
+	    for (let i=0;i < Map.ctrl.axis.length;i++ ) {
+		if (Map.ctrl.axis && Map.ctrl.axis.func) {
+		    Map.ctrl.axis.func(pad.axis[i]);
+		}
+	    }
+	    for (let i=0;i < Map.ctrl.btn.length;i++) {
+		if (Map.ctrl.btn && Map.ctrl.btn.func) {
+		    let val = pad.buttons[i];
+		    let pressed = (val == 1.0);
+		    if (typeof(val) == "object") {
+			pressed = val.pressed;
+			val = val.value;
+		    }
+		    Map.ctrl.btn.func(val);
+		}
+	    }
 	    Map && Map.send();	// if need, send control data to server.
 	} else {
 	    create_map(Map, pads[TargetPad.index]);
 	    //console.log(Map);
+	    generic_mapping(Map, pads[TargetPad.index]);
 	}
     } else {
 	info_gamepad(null);
