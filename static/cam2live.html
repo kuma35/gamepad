@@ -316,10 +316,11 @@
 <!-- モーダル・ダイアログ -->
 <div class="modal fade" id="axis-control-modal" tabindex="-1">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content" id="0">
       <div class="modal-header">
 	<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
-	<h4 class="modal-title">操作割付 - アナログ軸</h4>
+	<ul class="list-inline"><li><span class="label label-primary" id="axis-modal-label">AXIS</span></li></ul>
+	<h4 class="modal-title">操作割付</h4>
       </div>
       <div class="modal-body">
 	<div class="bs-component">
@@ -330,12 +331,12 @@
               </div>
               <div class="panel-body">
 		<div clas="list-group" id="select-axis-control">
-		  <a class="list-group-item">(割付無)</a>
-		  <a class="list-group-item">旋回</a>
-		  <a class="list-group-item">ブーム上げ下ろし</a>
-		  <a class="list-group-item">アーム伸ばし曲げ</a>
-		  <a class="list-group-item">バケット掘削開放</a>
-		  <a class="list-group-item">バケット回転</a>
+		  <a class="list-group-item" id="none">(割付無)</a>
+		  <a class="list-group-item" id="turn">旋回</a>
+		  <a class="list-group-item" id="beam">ブーム上げ下ろし</a>
+		  <a class="list-group-item" id="arm">アーム伸ばし曲げ</a>
+		  <a class="list-group-item" id="backet">バケット掘削開放</a>
+		  <a class="list-group-item" id="backetturn">バケット回転</a>
 		</div>
               </div>
             </div>
@@ -346,9 +347,9 @@
 		<h3 class="panel-title">ノーマル／リバース</h3>
               </div>
               <div class="panel-body">
-		<div clas="list-group" id="select-axis-control">
-		  <a class="list-group-item">ノーマル</a>
-		  <a class="list-group-item">リバース</a>
+		<div clas="list-group" id="select-axis-normal-reverse">
+		  <a class="list-group-item" id="normal">ノーマル</a>
+		  <a class="list-group-item" id="reverse">リバース</a>
 		</div>
               </div>
             </div>
@@ -357,7 +358,7 @@
       </div>
       <div class="modal-footer">
 	<button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
-	<button type="button" class="btn btn-primary">OK</button>
+	<button type="button" class="btn btn-primary" id="axis-control-modal-ok">OK</button>
       </div>
     </div>
   </div>
@@ -365,10 +366,11 @@
 <!-- モーダル・ダイアログ -->
 <div class="modal fade" id="button-control-modal" tabindex="-1">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content" id="0">
       <div class="modal-header">
 	<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
-	<h4 class="modal-title">操作割付 - ボタン</h4>
+	<span class="label label-primary" id="button-modal-label">BUTTON</span></li></ul>
+	<h4 class="modal-title">操作割付</h4><ul class="list-inline">
       </div>
       <div class="modal-body">
 	<div class="bs-component">
@@ -379,17 +381,17 @@
               </div>
               <div class="panel-body">
 		<div clas="list-group" id="select-button-control">
-		  <a class="list-group-item">(割付無)</a>
-		  <a class="list-group-item">左旋回</a>
-		  <a class="list-group-item">右旋回</a>
-		  <a class="list-group-item">アーム伸ばし</a>
-		  <a class="list-group-item">アーム曲げ</a>
-		  <a class="list-group-item">ブーム下ろし</a>
-		  <a class="list-group-item">ブーム上げ</a>
-		  <a class="list-group-item">バケット掘削</a>
-		  <a class="list-group-item">バケット開放</a>
-		  <a class="list-group-item">バケット左回転</a>
-		  <a class="list-group-item">バケット右回転</a>
+		  <a class="list-group-item" id="none">(割付無)</a>
+		  <a class="list-group-item" id="turn-left">左旋回</a>
+		  <a class="list-group-item" id="turn-right">右旋回</a>
+		  <a class="list-group-item" id="arm-extend">アーム伸ばし</a>
+		  <a class="list-group-item" id="arm-fold">アーム曲げ</a>
+		  <a class="list-group-item" id="beam-down">ブーム下ろし</a>
+		  <a class="list-group-item" id="beam-up">ブーム上げ</a>
+		  <a class="list-group-item" id="backet-down">バケット掘削</a>
+		  <a class="list-group-item" id="backet-up">バケット開放</a>
+		  <a class="list-group-item" id="backetturn-left">バケット左回転</a>
+		  <a class="list-group-item" id="backetturn-right">バケット右回転</a>
 		</div>
               </div>
             </div>
@@ -398,7 +400,7 @@
       </div>
       <div class="modal-footer">
 	<button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
-	<button type="button" class="btn btn-primary">ボタン</button>
+	<button type="button" class="btn btn-primary" id="button-control-modal-ok">OK</button>
       </div>
     </div>
   </div>
