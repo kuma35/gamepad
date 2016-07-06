@@ -23,7 +23,6 @@ Function.method('curry', function () {
 });
 
 //////////
-
 let TargetPad = {
     'index': -1,
     'id':'',
@@ -39,18 +38,18 @@ let Map = {
     'ctrl_axis' : [],
     'ctrl_btn' : [],
     'last_data': {
-	'turn': 0.1,
-	'beam': 0.1,
-	'arm': 0.1,
-	'backet': 0.1,
-	'backetturn': 0.1,
+	'turn': '0.1',
+	'beam': '0.1',
+	'arm': '0.1',
+	'backet': '0.1',
+	'backetturn': '0.1',
     },
     'data' : {
-	'turn': 0.0,
-	'beam': 0.0,
-	'arm': 0.0,
-	'backet': 0.0,
-	'backetturn': 0.0,
+	'turn': '0',
+	'beam': '0',
+	'arm': '0',
+	'backet': '0',
+	'backetturn': '0',
     },
     'none' : function(that, v) {
 	'use strict';
@@ -58,83 +57,83 @@ let Map = {
     },
     'turn_normal' : function(that, v) {
 	'use strict';
-	that.data.turn = v;
+	that.data.turn = v.toFixed(2);
     },
     'turn_reverse' : function(that, v) {
 	'use strict';
-	that.data.turn = v * -1;
+	that.data.turn = (v * -1).toFixed(2);
     },
     'turn_left' : function(that, v) {
 	'use strict';
-	that.data.turn = -1;
+	that.data.turn = '-1.00';
     },
     'turn_right' : function(that, v) {
 	'use strict';
-	that.data.turn = 1;
+	that.data.turn = '1.00';
     },
     'beam_normal' : function(that, v) {
 	'use strict';
-	that.data.beam = v;
+	that.data.beam = v.toFixed(2);
     },
     'beam_reverse' : function(that, v) {
 	'use strict';
-	that.data.beam = v * -1;
+	that.data.beam = (v * -1).toFixed(2);
     },
     'beam_down' : function(that, v) {
 	'use strict';
-	that.data.beam = -1;
+	that.data.beam = '-1.00';
     },
     'beam_up' : function(that, v) {
 	'use strict';
-	that.data.beam = 1;
+	that.data.beam = '1.00';
     },
     'arm_normal' : function(that, v) {
 	'use strict';
-	that.data.arm = v;
+	that.data.arm = v.toFixed(2);
     },
     'arm_reverse' : function(that, v) {
 	'use strict';
-	that.data.arm = v * -1;
+	that.data.arm = (v * -1).toFixed(2);
     },
     'arm_fold' : function(that, v) {
 	'use strict';
-	that.data.arm = -1;
+	that.data.arm = '-1.00';
     },
     'arm_extend' : function(that, v) {
 	'use strict';
-	that.data.arm = 1;
+	that.data.arm = '1.00';
     },
     'backet_normal' : function(that, v) {
 	'use strict';
-	that.data.backet = v;
+	that.data.backet = v.toFixed(2);
     },
     'backet_reverse' : function(that, v) {
 	'use strict';
-	that.data.backet = v * -1;
+	that.data.backet = (v * -1).toFixed(2);
     },
     'backet_down' : function(that, v) {
 	'use strict';
-	that.data.backet = -1;
+	that.data.backet = '-1.00';
     },
     'backet_up' : function(that, v) {
 	'use strict';
-	that.data.backet = 1;
+	that.data.backet = '1.00';
     },
     'backetturn_normal' : function(that, v) {
 	'use strict';
-	that.data.backetturn = v;
+	that.data.backetturn = v.toFixed(2);
     },
     'backetturn_reverse' : function(that, v) {
 	'use strict';
-	that.data.backetturn = v * -1;
+	that.data.backetturn = (v * -1).toFixed(2);
     },
     'backetturn_left' : function(that, v) {
 	'use strict';
-	that.data.backetturn = -1;
+	that.data.backetturn = '-1.00';
     },
     'backetturn_right' : function(that, v) {
 	'use strict';
-	that.data.backetturn = 1;
+	that.data.backetturn = '1.00';
     },
     // ajax
     'send_error': function(jqXHR, textStatus, errorThrown) {
@@ -170,11 +169,11 @@ let Map = {
 		cache:false,
 		timeout:10000,
 		data:{
-		    't':this.data.turn.toFixed(2),
-		    'b':this.data.beam.toFixed(2),
-		    'a':this.data.arm.toFixed(2),
-		    'bk':this.data.backet.toFixed(2),
-		    'bt':this.data.backetturn.toFixed(2),
+		    't':this.data.turn,
+		    'b':this.data.beam,
+		    'a':this.data.arm,
+		    'bk':this.data.backet,
+		    'bt':this.data.backetturn,
 		},
 		//error:this.send_error,
 	    }).done(function(data) {
