@@ -28,54 +28,166 @@ let TargetPad = {
     'index': -1,
     'id':'',
 };
-let AllowAjax = false;
+let AllowAjax = true;
 const rAF = window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.requestAnimationFrame;
+// map
 let Map = {
     'gamepad_id': '',
     'session_id': '',	// get session id from server.
-    'ctrl' : {
-	'axis' : [],
-	'btn' : [],
+    'ctrl_axis' : [],
+    'ctrl_btn' : [],
+    'last_data': {
+	'turn': 0.1,
+	'beam': 0.1,
+	'arm': 0.1,
+	'backet': 0.1,
+	'backetturn': 0.1,
     },
     'data' : {
-	turn: 0.0,
-	beam: 0.0,
-	arm: 0.0,
-	backet: 0.0,
-	backet_turn: 0.0,
+	'turn': 0.0,
+	'beam': 0.0,
+	'arm': 0.0,
+	'backet': 0.0,
+	'backetturn': 0.0,
     },
-    'none' : function(direction, value) {
+    'none' : function(that, v) {
 	'use strict';
-	// nothing
+	;// nothing
     },
-    'turn' : function(direction, value) {
+    'turn_normal' : function(that, v) {
 	'use strict';
-	this.data.turn = value * direction;
+	that.data.turn = v;
     },
-    'beam' : function(direction, value) {
+    'turn_reverse' : function(that, v) {
 	'use strict';
-	this.data.beam = value * direction;
+	that.data.turn = v * -1;
     },
-    'arm' : function(dirction, value) {
+    'turn_left' : function(that, v) {
 	'use strict';
-	this.data.arm = value * direction;
+	that.data.turn = -1;
     },
-    'backet' : function(direction, value) {
+    'turn_right' : function(that, v) {
 	'use strict';
-	this.data.backet = value * direction;
+	that.data.turn = 1;
     },
-    'backet_turn' : function(direction, value) {
+    'beam_normal' : function(that, v) {
 	'use strict';
-	this.data.backet_trun = value * direction;
+	that.data.beam = v;
     },
-    // execute
+    'beam_reverse' : function(that, v) {
+	'use strict';
+	that.data.beam = v * -1;
+    },
+    'beam_down' : function(that, v) {
+	'use strict';
+	that.data.beam = -1;
+    },
+    'beam_up' : function(that, v) {
+	'use strict';
+	that.data.beam = 1;
+    },
+    'arm_normal' : function(that, v) {
+	'use strict';
+	that.data.arm = v;
+    },
+    'arm_reverse' : function(that, v) {
+	'use strict';
+	that.data.arm = v * -1;
+    },
+    'arm_fold' : function(that, v) {
+	'use strict';
+	that.data.arm = -1;
+    },
+    'arm_extend' : function(that, v) {
+	'use strict';
+	that.data.arm = 1;
+    },
+    'backet_normal' : function(that, v) {
+	'use strict';
+	that.data.backet = v;
+    },
+    'backet_reverse' : function(that, v) {
+	'use strict';
+	that.data.backet = v * -1;
+    },
+    'backet_down' : function(that, v) {
+	'use strict';
+	that.data.backet = -1;
+    },
+    'backet_up' : function(that, v) {
+	'use strict';
+	that.data.backet = 1;
+    },
+    'backetturn_normal' : function(that, v) {
+	'use strict';
+	that.data.backetturn = v;
+    },
+    'backetturn_reverse' : function(that, v) {
+	'use strict';
+	that.data.backetturn = v * -1;
+    },
+    'backetturn_left' : function(that, v) {
+	'use strict';
+	that.data.backetturn = -1;
+    },
+    'backetturn_right' : function(that, v) {
+	'use strict';
+	that.data.backetturn = 1;
+    },
+    // ajax
+    'send_error': function(jqXHR, textStatus, errorThrown) {
+	$('#com-status').text('送信:error:'+textStatus);
+	AllowAjax = true;
+    },
+    'is_change': function() {
+	if (this.last_data.turn == this.data.turn &&
+	    this.last_data.beam == this.data.beam &&
+	    this.last_data.arm == this.data.arm &&
+	    this.last_data.backet == this.data.backet &&
+	    this.last_data.backetturn == this.data.backetturn) {
+	    // no change
+	    return false;
+	} else {
+	    // check data update
+	    this.last_data.turn = this.data.turn;
+	    this.last_data.beam = this.data.beam;
+	    this.last_data.arm = this.data.arm;
+	    this.last_data.backet = this.data.backet;
+	    this.last_data.backetturn = this.data.backetturn;
+	    return true;
+	}
+    },
     'send' : function () {
 	'use strict';
 	// send data to server
 	if (AllowAjax) {
-	    $.ajax().done().fail();
+	    AllowAjax = false;
+	    $.ajax({
+		type:'GET',
+		url:'/gp/sd',
+		cache:false,
+		timeout:10000,
+		data:{
+		    't':this.data.turn.toFixed(2),
+		    'b':this.data.beam.toFixed(2),
+		    'a':this.data.arm.toFixed(2),
+		    'bk':this.data.backet.toFixed(2),
+		    'bt':this.data.backetturn.toFixed(2),
+		},
+		//error:this.send_error,
+	    }).done(function(data) {
+		setTimeout(function() {
+		    console.log(data);
+		}, 1000);		
+	    }).fail(function(data) {
+		setTimeout(function() {
+		    console.log(data);
+		}, 1000);		
+	    }).always(function() {
+		AllowAjax = true;
+	    });
 	}
     },
 };
@@ -101,8 +213,8 @@ $('#axis-control-modal').on('show.bs.modal', function(e) {
     $('#axis-modal-label').text(key+' '+index);
     $('#select-axis-control .list-group-item').removeClass("active");
     $('#select-axis-normal-reverse .list-group-item').removeClass("active");
-    if( Map.ctrl.axis[index]) {
-	let term = Map.ctrl.axis[index].name.split('-');
+    if( Map.ctrl_axis[index]) {
+	let term = Map.ctrl_axis[index].id.split('-');
 	if (term[0]) {
 	    $('#select-axis-control #'+term[0]).addClass("active");
 	} else {
@@ -117,7 +229,7 @@ $('#axis-control-modal').on('show.bs.modal', function(e) {
 	$('#select-axis-control #none').addClass("active");
 	$('#select-axis-normal-reverse #normal').addClass("active");
     }
-    //$('#select-axis-control #'+Map.ctrl.axis[index].name).addClass("active");
+    //$('#select-axis-control #'+Map.ctrl_axis[index].id).addClass("active");
 });
 $('#select-axis-control').on('click', '.list-group-item', function() {
     $('#select-axis-control .list-group-item').removeClass("active");
@@ -140,7 +252,7 @@ $('#axis-control-modal-ok').on('click', function() {
 	nr_mark = '(R';
     }
     $('#list-axes #'+index).next().text(active.text()+nr_mark);
-    Map.ctrl.axis[index] = Map[key];
+    Map.ctrl_axis[index] = Map[key];
     $('#axis-control-modal').modal('hide');
 });
 $('#button-control-modal').on('show.bs.modal', function(e) {
@@ -150,16 +262,15 @@ $('#button-control-modal').on('show.bs.modal', function(e) {
     $('#button-control-modal .modal-content').attr('id', index);
     $('#button-modal-label').text(key+' '+index);
     $('#select-button-control .list-group-item').removeClass("active");
-    if( Map.ctrl.btn[index]) {
-	if (Map.ctrl.btn[index].name) {
-	    $('#select-button-control #'+Map.ctrl.btn[index].name).addClass("active");
+    if( Map.ctrl_btn[index]) {
+	if (Map.ctrl_btn[index].id) {
+	    $('#select-button-control #'+Map.ctrl_btn[index].id).addClass("active");
 	} else {
 	    $('#select-button-control #none').addClass("active");
 	}
     } else {
 	$('#select-button-control #none').addClass("active");
     }
-    //$('#select-axis-control #'+Map.ctrl.axis[index].name).addClass("active");
 });
 $('#select-button-control').on('click', '.list-group-item', function() {
     $('#select-button-control .list-group-item').removeClass("active");
@@ -170,7 +281,7 @@ $('#button-control-modal-ok').on('click', function() {
     let active = $('#select-button-control .active');
     let key = active.attr('id');
     $('#list-buttons #'+index).next().text(active.text());
-    Map.ctrl.btn[index] = Map[key];
+    Map.ctrl_btn[index] = Map[key];
     $('#button-control-modal').modal('hide');
 });
 
@@ -178,121 +289,84 @@ function create_map(map, pad) {
     'use strict';
     map.prototype = pad;
     map.gamepad_id = map.prototype.id;
-
-    // make controls functions
-    // axis(axis-value) ; only one argument.
-    // button() ; no argument. only call function.
-    map.turn_normal = {
-	'name' : 'turn-normal',
-	'func' : map.turn.curry(1.0),
-    };
-    map.turn_reverse = {
-	'name' :'turn-reverse',
-	'func' : map.turn.curry(-1.0),
-    };
-    map.turn_left = {
-	'name' : 'turn-left',
-	'func' : map.turn.curry(1.0, -1.0),
-    };
-    map.turn_right = {
-	'name' : 'turn-right',
-	'func' : map.turn.curry(1.0, 1.0),
-    };
-    map.beam_normal = {
-	'name' : 'beam-normal',
-	'func' : map.beam.curry(1.0),
-    };
-    map.beam_reverse = {
-	'name' : 'beam-reverse',
-	'func' : map.beam.curry(-1.0),
-    };
-    map.beam_down = {
-	'name' : 'beam-down',
-	'func' : map.beam.curry(1.0, -1.0),
-    };
-    map.beam_up = {
-	'name' : 'beam-up',
-	'func' : map.beam.curry(1.0, 1.0),
-    };
-    map.arm_normal = {
-	'name' : 'arm-normal',
-	'func' : map.arm.curry(1.0),
-    };
-    map.arm_reverse = {
-	'name' : 'arm-reverse',
-	'func' : map.arm.curry(-1.0),
-    };
-    map.arm_fold = {
-	'name' : 'arm-fold',
-	'func' : map.arm.curry(1.0, -1.0),
-    };
-    map.arm_extend = {
-	'name' : 'arm-extend',
-	'func' : map.arm.curry(1.0, 1.0),
-    };
-    map.backet_normal = {
-	'name' : 'backet-normal',
-	'func' : map.backet.curry(1.0),
-    };
-    map.backet_reverse = {
-	'name' : 'backet-reverse',
-	'func' : map.backet.curry(-1.0),
-    };
-    map.backet_fold = {
-	'name' : 'backet-fold',
-	'func' : map.backet.curry(1.0, -1.0),
-    };
-    map.backet_extend = {
-	'name' : 'backet-extend',
-	'func' : map.backet.curry(1.0, 1.0),
-    };
-    map.backetturn_normal = {
-	'name' : 'backetturn-normal',
-	'func' : map.backet_turn.curry(1.0),
-    };
-    map.backetturn_reverse = {
-	'name' : 'backetturn-reverse',
-	'func' : map.backet_turn.curry(-1.0),
-    };
-    map.backetturn_left = {
-	'name' : 'backetturn-left',
-	'func' : map.backet_turn.curry(1.0, -1.0),
-    };
-    map.backetturn_right = {
-	'name' : 'backetturn-right',
-	'func' : map.backet_turn.curry(1.0, 1.0),
-    };
-
+    map.turn_normal.id = 'turn-normal';
+    map.turn_reverse.id = 'turn-reverse';
+    map.turn_left.id = 'turn-left';
+    map.turn_right.id = 'turn-right';
+    map.beam_normal.id = 'beam-normal';
+    map.beam_reverse.id = 'beam-reverse';
+    map.beam_up.id = 'beam-up';
+    map.beam_down.id = 'beam-down';
+    map.arm_normal.id = 'arm-normal';
+    map.arm_reverse.id = 'arm-reverse';
+    map.arm_fold = 'arm-fold';
+    map.arm_extend = 'arm-extend';
+    map.backet_normal.id = 'backet-normal';
+    map.backet_reverse.id = 'backet-reverse';
+    map.backet_up.id = 'backet-up';
+    map.backet_down.id = 'backet-down';
+    map.backetturn_normal.id = 'backetturn-normal';
+    map.backetturn_reverse.id = 'backetturn-reverse';
+    map.backetturn_left.id = 'backetturn-left';
+    map.backetturn_right.id = 'backetturn-right';
 }
 
 function generic_mapping(map, pad) {
     // set default control
     if (pad.axes.length > 0) {
-	map.ctrl.axis[0] = map.turn_normal;
+	map.ctrl_axis[0] = map.turn_normal;
 	set_axis_label(0);
     }
     if (pad.axes.length > 1) {
-	map.ctrl.axis[1] = map.arm_normal;
+	map.ctrl_axis[1] = map.arm_normal;
 	set_axis_label(1);
     }
     if (pad.axes.length > 2) {
-	map.ctrl.axis[2] = map.backet_normal;
+	map.ctrl_axis[2] = map.backet_normal;
 	set_axis_label(2);
     }
     if (pad.axes.length > 3) {
-	map.ctrl.axis[3] = map.beam_normal;
+	map.ctrl_axis[3] = map.beam_normal;
 	set_axis_label(3);
     }
     if (pad.axes.length > 4) {
-	map.ctrl.axis[4] = map.backetturn_normal;
+	map.ctrl_axis[4] = map.backetturn_normal;
 	set_axis_label(4);
+    }
+}
+
+function get_session_error(jqXHR, textStatus, errorThrown) {
+    $('#com-status').text('セッション取得:error'+textStatus);
+    AllowAjax = true;
+}
+
+function get_session() {
+    if (AllowAjax) {
+	AllowAjax = false;
+	$.ajax({
+	    type:'get',
+	    url:'/gp/gs',
+	    cache:false,
+	    timeout:1000,
+	    dataType:'text',
+	    //error: get_session_error,
+	}).done(function (data) {
+	    $('#com-status').text('セッション取得:done');
+	    Map.session_id = data;
+	}).fail(function (data) {
+	    $('#com-status').text('セッション取得:fail');
+	}).always(function () {
+	    AllowAjax = true;
+	    console.log(Map.session_id);
+	});
     }
 }
 
 function set_axis_label(index) {
     'use strict';
     let label = '';
-    let key = Map.ctrl.axis[index].name;
+    let key = Map.ctrl_axis[index].id;
+    console.log(Map.ctrl_axis[index].id);
     let words = key.split('-');
     if (words[1] == 'normal' ||
 	words[1] == 'reverse') {
@@ -326,6 +400,7 @@ function list_gamepads() {
 		if ( i == TargetPad.index) {
 		    TargetPad.index = -1;
 		    TargetPad.id = '';
+		    Map.gamepad_id = '';
 		    info_gamepad(null);
 		}
 	    }
@@ -342,7 +417,7 @@ function info_gamepad(pad) {
 	for (let i=0;i<pad.axes.length;i++) {
 	    info_html += '<li>';
 	    info_html += '<span class="label label-primary gamepad-axis" data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">AXIS '+i+'</span>';
-	    info_html += '<span class="label label-default gamepad-axis" id="'+i+'"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">'+pad.axes[i].toFixed(5)+'</span>';
+	    info_html += '<span class="label label-default gamepad-axis" id="'+i+'"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">'+pad.axes[i].toFixed(2)+'</span>';
 	    info_html += '<span class="label label-success gamepad-axis"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="AXIS">(割付無)</span>';
 	    info_html += '</li>';
 	}
@@ -377,7 +452,7 @@ function update_gamepad(pad) {
 	    let axis = $('#list-axes #'+i);
 	    if (axis.length) {
 		let axis_last = axis.text();
-		let axis_now = pad.axes[i].toFixed(5);
+		let axis_now = pad.axes[i].toFixed(2);
 		if (axis_last != axis_now ) {
 		    axis.text(axis_now);
 		}
@@ -428,27 +503,34 @@ function scanGamepads() {
 	let pad = pads[TargetPad.index];
 	update_gamepad(pad);
 	if (Map.gamepad_id != '') {
-	    for (let i=0;i < Map.ctrl.axis.length;i++ ) {
-		if (Map.ctrl.axis && Map.ctrl.axis.func) {
-		    Map.ctrl.axis.func(pad.axis[i]);
+	    for (let i=0;i < pad.axes.length;i++ ) {
+		if (Map.ctrl_axis[i]) {
+		    Map.ctrl_axis[i](Map, pad.axes[i]);
 		}
 	    }
-	    for (let i=0;i < Map.ctrl.btn.length;i++) {
-		if (Map.ctrl.btn && Map.ctrl.btn.func) {
+	    for (let i=0;i < pad.buttons.length;i++) {
+		if (Map.ctrl_btn[i]) {
 		    let val = pad.buttons[i];
 		    let pressed = (val == 1.0);
 		    if (typeof(val) == "object") {
 			pressed = val.pressed;
 			val = val.value;
 		    }
-		    Map.ctrl.btn.func(val);
+		    Map.ctrl_btn[i](Map, val);
 		}
 	    }
-	    Map && Map.send();	// if need, send control data to server.
+	    if (Map.is_change()) {
+		console.log('data');
+		console.log(Map.data);
+		console.log('last_data');
+		console.log(Map.last_data);
+		Map && Map.send();	// if need, send control data to server.
+	    }
 	} else {
 	    create_map(Map, pads[TargetPad.index]);
 	    //console.log(Map);
 	    generic_mapping(Map, pads[TargetPad.index]);
+	    get_session();
 	}
     } else {
 	info_gamepad(null);
