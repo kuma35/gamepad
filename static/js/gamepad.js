@@ -11,6 +11,7 @@ Function.prototype.method = function(name, func) {
     this.prototype[name] = func;
     return this;
 }
+
 Function.method('curry', function () {
     'use strict';
     let slice = Array.prototype.slice,
@@ -23,6 +24,7 @@ Function.method('curry', function () {
 });
 
 //////////
+const DECIMAL_WIDTH = 1;	// 小数桁数
 let TargetPad = {
     'index': -1,
     'id':'',
@@ -32,133 +34,472 @@ const rAF = window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.requestAnimationFrame;
 // map
-let Map = {
-    'gamepad_id': '',
-    'session_id': '',	// get session id from server.
-    'ctrl_axis' : [],
-    'ctrl_btn' : [],
-    'last_data': {
-	'turn': '0.1',
-	'beam': '0.1',
-	'arm': '0.1',
-	'backet': '0.1',
-	'backetturn': '0.1',
-    },
-    'data' : {
-	'turn': '0',
-	'beam': '0',
-	'arm': '0',
-	'backet': '0',
-	'backetturn': '0',
-    },
-    'none' : function(that, v) {
+let maps = [];
+
+const construct_base_map = function() {
+    let that;
+    let data = {	// dummy. please override inherited-object.
+	turn: '0.0',
+	beam: '0.0',
+	arm: '0.0',
+	backet: '0.0',
+	backetturn: '0.0',
+    };
+
+    that = {};	// base_mapでは特に何かから継承しない。
+    
+    // private method
+    const _normal = function(v) {
 	'use strict';
-	;// nothing
-    },
-    'turn_normal' : function(that, v) {
+	return v.toFixed(DECIMAL_WIDTH);
+    };
+    
+    const _reverse = function(v) {
 	'use strict';
-	that.data.turn = v.toFixed(2);
-    },
-    'turn_reverse' : function(that, v) {
+	return (v * -1).toFixed(DECIMAL_WIDTH);
+    };
+
+    // public method
+    const none = function(v) {
 	'use strict';
-	that.data.turn = (v * -1).toFixed(2);
-    },
-    'turn_left' : function(that, v) {
+	;
+    };
+    none.id = 'none';
+    that.none = none;
+
+    const turn_normal = function(v) {
 	'use strict';
-	that.data.turn = '-1.00';
-    },
-    'turn_right' : function(that, v) {
+	data.turn = _normal(v);
+    };
+    turn_normal.id = 'turn_normal';
+    that.turn_normal = turn_normal;
+    
+    const turn_reverse = function(v) {
 	'use strict';
-	that.data.turn = '1.00';
-    },
-    'beam_normal' : function(that, v) {
+	data.turn = _reverse(v);
+    };
+    turn_reverse.id = 'turn_reverse';
+    that.turn_reverse = turn_reverse;
+    
+    const turn_left = function(v) {
 	'use strict';
-	that.data.beam = v.toFixed(2);
-    },
-    'beam_reverse' : function(that, v) {
+	data.turn = _reverse(v);
+    };
+    turn_left.id = 'turn_left';
+    that.turn_left = turn_left;
+    
+    const turn_right = function(v) {
 	'use strict';
-	that.data.beam = (v * -1).toFixed(2);
-    },
-    'beam_down' : function(that, v) {
+	data.turn = _normal(v);
+    };
+    turn_right.id = 'turn_right';
+    that.turn_right = turn_right;
+    
+    const beam_normal = function(v) {
 	'use strict';
-	that.data.beam = '-1.00';
-    },
-    'beam_up' : function(that, v) {
+	data.beam = _normal(v);
+    };
+    beam_normal.id = 'beam_normal';
+    that.beam_normal = beam_normal;
+    
+    const beam_reverse = function(v) {
 	'use strict';
-	that.data.beam = '1.00';
-    },
-    'arm_normal' : function(that, v) {
+	data.beam = _reverse(v);
+    };
+    beam_reverse.id = 'beam_reverse';
+    that.beam_reverse =beam_reverse;
+    
+    const beam_down = function(v) {
 	'use strict';
-	that.data.arm = v.toFixed(2);
-    },
-    'arm_reverse' : function(that, v) {
+	data.beam = _reverse(v);
+    };
+    beam_down.id = 'beam_down';
+    that.beam_down = beam_down;
+    
+    const beam_up = function(v) {
 	'use strict';
-	that.data.arm = (v * -1).toFixed(2);
-    },
-    'arm_fold' : function(that, v) {
+	data.beam = _normal(v);
+    };
+    beam_up.id = 'beam_up';
+    that.beam_up = beam_up;
+    
+    const arm_normal = function(v) {
 	'use strict';
-	that.data.arm = '-1.00';
-    },
-    'arm_extend' : function(that, v) {
+	data.arm = _normal(v);
+    };
+    arm_normal.id = 'arm_normal';
+    that.arm_normal = arm_normal;
+    
+    const arm_reverse = function(v) {
 	'use strict';
-	that.data.arm = '1.00';
-    },
-    'backet_normal' : function(that, v) {
+	data.arm = _reverse(v);
+    };
+    arm_reverse.id = 'arm_reverse';
+    that.arm_reverse = arm_reverse;
+    
+    const arm_fold = function(v) {
 	'use strict';
-	that.data.backet = v.toFixed(2);
-    },
-    'backet_reverse' : function(that, v) {
+	data.arm = _reverse(v);
+    };
+    arm_fold.id = 'arm_fold';
+    that.arm_fold = arm_fold;
+    
+    const arm_extend = function(v) {
 	'use strict';
-	that.data.backet = (v * -1).toFixed(2);
-    },
-    'backet_down' : function(that, v) {
+	data.arm = _normal(v);
+    };
+    arm_extend.id = 'arm_extend';
+    that.arm_extend = arm_extend;
+    
+    const backet_normal = function(v) {
 	'use strict';
-	that.data.backet = '-1.00';
-    },
-    'backet_up' : function(that, v) {
+	data.backet = _normal(v);
+    }
+    backet_normal.id = 'backet_normal'
+    that.backet_normal = backet_normal;
+    
+    const backet_reverse = function(v) {
 	'use strict';
-	that.data.backet = '1.00';
-    },
-    'backetturn_normal' : function(that, v) {
+	data.backet = _reverse(v);
+    };
+    backet_reverse.id = 'backet_reverse';
+    that.backet_reverse = backet_reverse;
+    
+    const backet_down = function(v) {
 	'use strict';
-	that.data.backetturn = v.toFixed(2);
-    },
-    'backetturn_reverse' : function(that, v) {
+	data.backet = _reverse(v);
+    };
+    backet_down.id = 'backet_down';
+    that.backet_down = backet_down;
+    
+    const backet_up = function(v) {
 	'use strict';
-	that.data.backetturn = (v * -1).toFixed(2);
-    },
-    'backetturn_left' : function(that, v) {
+	data.backet = _normal(v);
+    };
+    backet_up.id = 'backet_up';
+    that.backet_up = backet_up;
+    
+    const backetturn_normal = function(v) {
 	'use strict';
-	that.data.backetturn = '-1.00';
-    },
-    'backetturn_right' : function(that, v) {
+	data.backetturn = _normal(v);
+    };
+    backetturn_normal.id = 'backetturn_normal';
+    that.backetturn_normal = backetturn_normal;
+    
+    const backetturn_reverse = function(v) {
 	'use strict';
-	that.data.backetturn = '1.00';
-    },
+	data.backetturn = _reverse(v);
+    };
+    backetturn_reverse.id = 'backetturn_reverse';
+    that.backetturn_reverse = backetturn_reverse;
+    
+    const backetturn_left = function(v) {
+	'use strict';
+	data.backetturn = _reverse(v);
+    };
+    backetturn_left.id = 'backetturn_left';
+    that.backetturn_left = backetturn_left;
+    
+    const backetturn_right = function(v) {
+	'use strict';
+	data.backetturn = _normal(v);
+    };
+    backetturn_right.id = 'backetturn_right';
+    that.backetturn_right = backetturn_right;
+    
+
+    return that;
+};
+
+const construct_map = function(spec) {
+    // spec = { pad }
+    let that;
+
+    let last_pad = {
+	axes:[],
+	buttons:[],
+    };
+    let connect_flag = true;
+    let gamepadid;
+    let sessionid;
+    let data = {	// override construct_base_map
+	turn: '0.0',
+	beam: '0.0',
+	arm: '0.0',
+	backet: '0.0',
+	backetturn: '0.0',
+    };
+    let ctrl_axes = [];
+    let ctrl_buttons = [];
+
+    // set params
+    gamepadid = spec.pad && spec.pad.id || '';
+
+    // that && inherit
+    that = construct_base_map();
+
+
+    // public methods
+    const set_axis_label = function(index) {
+	'use strict';
+	let label = '';
+	let key = ctrl_axes[index].id;
+	let words = key.split('_');
+	if (words[1] == 'normal' ||
+	    words[1] == 'reverse') {
+	    label = $('#select-axis-control #'+words[0]).text();
+	    if (words[1] == 'reverse') {
+		label += '(R';
+	    }
+	} else {
+	    label = $('#select-axis-control #'+key).text();
+	}
+	$('#list-axes #'+index).next().text(label);
+    };
+    that.set_axis_label = set_axis_label;
+
+    const default_control = function() {
+	'use strict';
+	if (spec.pad.axes.length > 0) {
+	    ctrl_axes[0] = that.turn_normal;
+	    set_axis_label(0);
+	}
+	if (spec.pad.axes.length > 1) {
+	    ctrl_axes[1] = that.arm_normal;
+	    set_axis_label(1);
+	}
+	if (spec.pad.axes.length > 2) {
+	    ctrl_axes[2] = that.backet_normal;
+	    set_axis_label(2);
+	}
+	if (spec.pad.axes.length > 3) {
+	    ctrl_axes[3] = that.beam_normal;
+	    set_axis_label(3);
+	}
+	if (spec.pad.axes.length > 4) {
+	    ctrl_axes[4] = that.backetturn_normal;
+	    set_axis_label(4);
+	}
+    };
+    that.default_control = default_control;
+
+    const set_connected = function(v) {
+	'use strict';
+	connect_flag = v;
+	if (!v) {
+	    expire_session();
+	}
+    };
+    const get_connected = function() {
+	'use strict';
+	return connect_flag;
+    };
+    Object.defineProperty(that, "connected", {
+	set: set_connected,
+	get: get_connected, });
+
+    const set_gamepadid = function(v) {
+	'use strict';
+	gamepadid = v;
+    };
+    const get_gamepadid = function() {
+	'use strict';
+	return gamepadid;
+    };
+    Object.defineProperty(that, "gamepad_id", {
+	set: set_gamepadid,
+	get: get_gamepadid, });
+
+    const get_sessionid = function() {
+	'use strict';
+	return sessionid;
+    };
+    const set_sessionid = function(v) {
+	'use strict';
+	sessionid = v;
+    };
+    Object.defineProperty(that, "session_id", {
+	set: set_sessionid,
+	get: get_sessionid, });
+    
+    const set_ctrl_axes = function(i, func_name) {
+	'use strict';
+	if (func_name in that) {
+	    if (ctrl_axes[i]) {
+		delete ctrl_axes[i];
+	    }
+	    ctrl_axes[i] = that[func_name];
+	} else {
+	    console.log('maps['+i+'] not have ['+func_name+']');
+	}
+    };
+    that.set_ctrl_axes = set_ctrl_axes;
+
+    const set_ctrl_buttons = function(i, func_name) {
+	'use strict';
+	if (func_name in that) {
+	    if (ctrl_buttons[i]) {
+		delete ctrl_buttons[i];
+	    }
+	    ctrl_buttons[i] = that[func_name];
+	} else {
+	    console.log('maps['+i+'] not have ['+func_name+']');
+	}
+    };
+    that.set_ctrl_buttons = set_ctrl_buttons;
+
+    const ctrl_axis_id = function(i) {
+	'use strict';
+	let id = '';
+	if (ctrl_axes[i]) {
+	    id = ctrl_axes[i].id;
+	}
+	return id;
+    };
+    that.ctrl_axis_id = ctrl_axis_id;
+
+    const ctrl_button_id = function(i) {
+	'use strict';
+	let id = ''
+	if (ctrl_buttons[i]) {
+	    id = ctrl_buttons[i].id;
+	}
+	return id;
+    };
+    that.ctrl_button_id = ctrl_button_id;
+
+    const exec_axis = function(i) {
+	'use strict';
+	let flag = false;
+	if (ctrl_axes[i]) {
+	    let axis = spec.pad.axes[i];
+	    if ((typeof last_pad.axes[i] == 'undefined') ||
+		(last_pad.axes[i] != axis)) {
+		ctrl_axes[i](axis);
+		last_pad.axes[i] = axis;
+		flag = true;
+	    }
+	}
+	return flag;
+    };
+    that.exec_axis = exec_axis;
+
+    const exec_axes = function() {
+	'use strict';
+	let is_change = false;
+	for (let i=0;i < spec.pad.axes.length;i++ ) {
+	    is_change |= exec_axis(i);
+	}
+	return is_change;
+    }
+    that.exec_axes = exec_axes
+
+    const exec_button = function(i) {
+	'use strict';
+	let flag = false;
+	if (ctrl_buttons[i]) {
+	    let val = spec.pad.buttons[i];
+	    if (typeof(val) == "object") {
+		val = val.value;
+	    }
+	    if ((typeof last_pad.buttons[i] == 'undefined') ||
+		(last_pad.buttons[i] != val)) {
+		ctrl_buttons[i](val);
+		last_pad.buttons[i] = val;
+		flag = true;
+	    }
+	}
+	return flag;
+    };
+    that.exec_button = exec_button;
+
+    const exec_buttons = function() {
+	'use strict';
+	let is_change = false;
+	for (let i=0;i < spec.pad.buttons.length;i++ ) {
+	    is_change |= exec_button(i);
+	}
+	return is_change;
+    }
+    that.exec_buttons = exec_buttons;
+
+    const exec = function() {
+	'use strict';
+	let is_change = false;
+	is_change |= exec_axes();
+	is_change |= exec_buttons();
+	return is_change;
+    }
+    that.exec = exec;
+
     // ajax
-    'send_error': function(jqXHR, textStatus, errorThrown) {
+    const expire_session = function() {
+	'use strict';
+	if (sessionid && AllowAjax) {
+	    AllowAjax = false;
+	    $.ajax({
+		type:'get',
+		url:'/gp/es',
+		data : {
+		    i : sessionid,
+		},
+		cache:false,
+		timeout:1000,
+	    }).done(function () {
+		$('#com-status').text('セッション expire:done');
+	    }).fail(function () {
+		// 念の為に出すexpireリクエスト。
+		// リクエストが失敗してもサーバ側で
+		// 期限切れのセッションは適宜削除回収されるので特にエラーとはしない。
+		$('#com-status').text('セッション expire:fail');
+	    }).always(function () {
+		sessionid = '';
+		AllowAjax = true;
+	    });
+	}
+    };
+    that.expire_session = expire_session;
+
+    const get_session_error = function (jqXHR, textStatus, errorThrown) {
+	// get_session ajax error-handler
+	'use strict';
+	$('#com-status').text('セッション取得:error'+textStatus);
+	AllowAjax = true;
+    };
+
+    const get_session = function() {
+	'use strict';
+	if (AllowAjax) {
+	    AllowAjax = false;
+	    $.ajax({
+		type:'get',
+		url:'/gp/gs',
+		cache:false,
+		timeout:1000,
+		dataType:'text',
+		error: get_session_error,
+	    }).done(function (data) {
+		$('#com-status').text('セッション取得:done');
+		sessionid = data;
+	    }).fail(function (data) {
+		// 注意:sessionid取得失敗時はsend()は実行しない。
+		$('#com-status').text('セッション取得:fail');
+	    }).always(function () {
+		AllowAjax = true;
+		console.log(sessionid);
+	    });
+	}
+    };
+    that.get_session = get_session;
+    
+    const send_error = function(jqXHR, textStatus, errorThrown) {
+	'use strict';
 	$('#com-status').text('送信:error:'+textStatus);
 	AllowAjax = true;
-    },
-    'is_change': function() {
-	if (this.last_data.turn == this.data.turn &&
-	    this.last_data.beam == this.data.beam &&
-	    this.last_data.arm == this.data.arm &&
-	    this.last_data.backet == this.data.backet &&
-	    this.last_data.backetturn == this.data.backetturn) {
-	    // no change
-	    return false;
-	} else {
-	    // check data update
-	    this.last_data.turn = this.data.turn;
-	    this.last_data.beam = this.data.beam;
-	    this.last_data.arm = this.data.arm;
-	    this.last_data.backet = this.data.backet;
-	    this.last_data.backetturn = this.data.backetturn;
-	    return true;
-	}
-    },
-    'send' : function () {
+    };
+    // send_error is private method no let to that.send_error
+    
+    const send =  function () {
 	'use strict';
 	// send data to server
 	if (AllowAjax) {
@@ -169,11 +510,11 @@ let Map = {
 		cache:false,
 		timeout:10000,
 		data:{
-		    't':this.data.turn,
-		    'b':this.data.beam,
-		    'a':this.data.arm,
-		    'bk':this.data.backet,
-		    'bt':this.data.backetturn,
+		    't':data.turn,
+		    'b':data.beam,
+		    'a':data.arm,
+		    'bk':data.backet,
+		    'bt':data.backetturn,
 		},
 		//error:this.send_error,
 	    }).done(function(data) {
@@ -188,10 +529,18 @@ let Map = {
 		AllowAjax = true;
 	    });
 	}
-    },
+    };
+    that.send = send;
+   
+    // set default control
+    default_control();
+
+    return that;
 };
 
+//event handlers
 $(window).on('gamepadconnected gamepaddisconnected', list_gamepads);
+
 $('#select-gamepad').on('click', '.list-group-item', function() {
     'use strict';
     TargetPad.index = this.id;
@@ -204,6 +553,7 @@ $('#select-gamepad').on('click', '.list-group-item', function() {
 	(navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
     info_gamepad(pads[TargetPad.index]);
 });
+
 $('#axis-control-modal').on('show.bs.modal', function(e) {
     'use strict';
     let index = $(e.relatedTarget).data('index');
@@ -212,8 +562,9 @@ $('#axis-control-modal').on('show.bs.modal', function(e) {
     $('#axis-modal-label').text(key+' '+index);
     $('#select-axis-control .list-group-item').removeClass("active");
     $('#select-axis-normal-reverse .list-group-item').removeClass("active");
-    if( Map.ctrl_axis[index]) {
-	let term = Map.ctrl_axis[index].id.split('-');
+    let id = maps[TargetPad.index].ctrl_axis_id(index);
+    if (id) {
+	let term = id.split('_');
 	if (term[0]) {
 	    $('#select-axis-control #'+term[0]).addClass("active");
 	} else {
@@ -228,16 +579,18 @@ $('#axis-control-modal').on('show.bs.modal', function(e) {
 	$('#select-axis-control #none').addClass("active");
 	$('#select-axis-normal-reverse #normal').addClass("active");
     }
-    //$('#select-axis-control #'+Map.ctrl_axis[index].id).addClass("active");
 });
+
 $('#select-axis-control').on('click', '.list-group-item', function() {
     $('#select-axis-control .list-group-item').removeClass("active");
     $(this).addClass("active");
 });
+
 $('#select-axis-normal-reverse').on('click', '.list-group-item', function() {
     $('#select-axis-normal-reverse .list-group-item').removeClass("active");
     $(this).addClass("active");
 });
+
 $('#axis-control-modal-ok').on('click', function() {
     let index = $('#axis-control-modal .modal-content').attr('id');
     let active = $('#select-axis-control .active');
@@ -251,9 +604,10 @@ $('#axis-control-modal-ok').on('click', function() {
 	nr_mark = '(R';
     }
     $('#list-axes #'+index).next().text(active.text()+nr_mark);
-    Map.ctrl_axis[index] = Map[key];
+    maps[TargetPad.index].set_ctrl_axes(index, key);
     $('#axis-control-modal').modal('hide');
 });
+
 $('#button-control-modal').on('show.bs.modal', function(e) {
     'use strict';
     let index = $(e.relatedTarget).data('index');
@@ -261,125 +615,29 @@ $('#button-control-modal').on('show.bs.modal', function(e) {
     $('#button-control-modal .modal-content').attr('id', index);
     $('#button-modal-label').text(key+' '+index);
     $('#select-button-control .list-group-item').removeClass("active");
-    if( Map.ctrl_btn[index]) {
-	if (Map.ctrl_btn[index].id) {
-	    $('#select-button-control #'+Map.ctrl_btn[index].id).addClass("active");
-	} else {
-	    $('#select-button-control #none').addClass("active");
-	}
+    let id = maps[TargetPad.index].ctrl_button_id(index);
+    if(id) {
+	$('#select-button-control #'+id).addClass("active");
     } else {
 	$('#select-button-control #none').addClass("active");
     }
 });
+
 $('#select-button-control').on('click', '.list-group-item', function() {
     $('#select-button-control .list-group-item').removeClass("active");
     $(this).addClass("active");
 });
+
 $('#button-control-modal-ok').on('click', function() {
     let index = $('#button-control-modal .modal-content').attr('id');
     let active = $('#select-button-control .active');
     let key = active.attr('id');
     $('#list-buttons #'+index).next().text(active.text());
-    Map.ctrl_btn[index] = Map[key];
+    maps[TargetPad.index].set_ctrl_buttons(index, key);
     $('#button-control-modal').modal('hide');
 });
 
-function create_map(map, pad) {
-    'use strict';
-    map.prototype = pad;
-    map.gamepad_id = map.prototype.id;
-    map.turn_normal.id = 'turn-normal';
-    map.turn_reverse.id = 'turn-reverse';
-    map.turn_left.id = 'turn-left';
-    map.turn_right.id = 'turn-right';
-    map.beam_normal.id = 'beam-normal';
-    map.beam_reverse.id = 'beam-reverse';
-    map.beam_up.id = 'beam-up';
-    map.beam_down.id = 'beam-down';
-    map.arm_normal.id = 'arm-normal';
-    map.arm_reverse.id = 'arm-reverse';
-    map.arm_fold = 'arm-fold';
-    map.arm_extend = 'arm-extend';
-    map.backet_normal.id = 'backet-normal';
-    map.backet_reverse.id = 'backet-reverse';
-    map.backet_up.id = 'backet-up';
-    map.backet_down.id = 'backet-down';
-    map.backetturn_normal.id = 'backetturn-normal';
-    map.backetturn_reverse.id = 'backetturn-reverse';
-    map.backetturn_left.id = 'backetturn-left';
-    map.backetturn_right.id = 'backetturn-right';
-}
 
-function generic_mapping(map, pad) {
-    // set default control
-    if (pad.axes.length > 0) {
-	map.ctrl_axis[0] = map.turn_normal;
-	set_axis_label(0);
-    }
-    if (pad.axes.length > 1) {
-	map.ctrl_axis[1] = map.arm_normal;
-	set_axis_label(1);
-    }
-    if (pad.axes.length > 2) {
-	map.ctrl_axis[2] = map.backet_normal;
-	set_axis_label(2);
-    }
-    if (pad.axes.length > 3) {
-	map.ctrl_axis[3] = map.beam_normal;
-	set_axis_label(3);
-    }
-    if (pad.axes.length > 4) {
-	map.ctrl_axis[4] = map.backetturn_normal;
-	set_axis_label(4);
-    }
-}
-
-function get_session_error(jqXHR, textStatus, errorThrown) {
-    $('#com-status').text('セッション取得:error'+textStatus);
-    AllowAjax = true;
-}
-
-function get_session() {
-    if (AllowAjax) {
-	AllowAjax = false;
-	$.ajax({
-	    type:'get',
-	    url:'/gp/gs',
-	    cache:false,
-	    timeout:1000,
-	    dataType:'text',
-	    //error: get_session_error,
-	}).done(function (data) {
-	    $('#com-status').text('セッション取得:done');
-	    Map.session_id = data;
-	}).fail(function (data) {
-	    $('#com-status').text('セッション取得:fail');
-	}).always(function () {
-	    AllowAjax = true;
-	    console.log(Map.session_id);
-	});
-    }
-}
-
-function set_axis_label(index) {
-    'use strict';
-    let label = '';
-    let key = Map.ctrl_axis[index].id;
-    console.log(Map.ctrl_axis[index].id);
-    let words = key.split('-');
-    if (words[1] == 'normal' ||
-	words[1] == 'reverse') {
-	label = $('#select-axis-control #'+words[0]).text();
-	if (words[1] == 'reverse') {
-	    label += '(R';
-	}
-    } else {
-	label = $('#select-axis-control #'+key).text();
-    }
-    $('#list-axes #'+index).next().text(label);
-}
-
-//code here
 function list_gamepads() {
     'use strict';
     let pads = navigator.getGamepads ? navigator.getGamepads() :
@@ -397,6 +655,7 @@ function list_gamepads() {
 	    } else {
 		id_list_html += '<a id="'+i+'" class="list-group-item disabled"></a>';
 		if ( i == TargetPad.index) {
+		    maps[TargetPad.index].connected = false;
 		    TargetPad.index = -1;
 		    TargetPad.id = '';
 		    Map.gamepad_id = '';
@@ -416,7 +675,7 @@ function info_gamepad(pad) {
 	for (let i=0;i<pad.axes.length;i++) {
 	    info_html += '<li>';
 	    info_html += '<span class="label label-primary gamepad-axis" data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">AXIS '+i+'</span>';
-	    info_html += '<span class="label label-default gamepad-axis" id="'+i+'"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">'+pad.axes[i].toFixed(2)+'</span>';
+	    info_html += '<span class="label label-default gamepad-axis" id="'+i+'"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="axis">'+pad.axes[i].toFixed(DECIMAL_WIDTH)+'</span>';
 	    info_html += '<span class="label label-success gamepad-axis"  data-toggle="modal" data-target="#axis-control-modal" data-index="'+i+'" data-key="AXIS">(割付無)</span>';
 	    info_html += '</li>';
 	}
@@ -451,7 +710,7 @@ function update_gamepad(pad) {
 	    let axis = $('#list-axes #'+i);
 	    if (axis.length) {
 		let axis_last = axis.text();
-		let axis_now = pad.axes[i].toFixed(2);
+		let axis_now = pad.axes[i].toFixed(DECIMAL_WIDTH);
 		if (axis_last != axis_now ) {
 		    axis.text(axis_now);
 		}
@@ -484,9 +743,7 @@ function update_control_list(selector) {
     }
 }
 
-//Create AnimationFrame
-
-//Update
+//Update loop
 function scanGamepads() {
     'use strict';
     let pads = navigator.getGamepads ? navigator.getGamepads() :
@@ -501,35 +758,32 @@ function scanGamepads() {
     if (TargetPad.index > -1) {
 	let pad = pads[TargetPad.index];
 	update_gamepad(pad);
-	if (Map.gamepad_id != '') {
-	    for (let i=0;i < pad.axes.length;i++ ) {
-		if (Map.ctrl_axis[i]) {
-		    Map.ctrl_axis[i](Map, pad.axes[i]);
-		}
-	    }
-	    for (let i=0;i < pad.buttons.length;i++) {
-		if (Map.ctrl_btn[i]) {
-		    let val = pad.buttons[i];
-		    let pressed = (val == 1.0);
-		    if (typeof(val) == "object") {
-			pressed = val.pressed;
-			val = val.value;
+	if (maps[TargetPad.index]) {
+	    let map = maps[TargetPad.index];
+	    if (map.connected) {
+		if (map.exec()) {
+		    if (map.session_id) {
+			map.send();	// if need, send control data to server.
+		    } else {
+			console.log('no session id; no send');
 		    }
-		    Map.ctrl_btn[i](Map, val);
 		}
-	    }
-	    if (Map.is_change()) {
-		console.log('data');
-		console.log(Map.data);
-		console.log('last_data');
-		console.log(Map.last_data);
-		Map && Map.send();	// if need, send control data to server.
+	    } else {
+		console.log('map.gamepad_id['+map.gamepad_id+'], pad.id['+pad.id+']');
+		if (map.gamepad_id != pad.id) {
+		    map.expire_session();
+		    delete maps[TargetPad.index];
+		    maps[TargetPad.index] = construct_map({pad:pad});
+		    map = maps[TargetPad.index];
+		} else {
+		    // gamepad_id == pad.id then reuse this.
+		    map.connected = true;
+		}
+		map.get_session();
 	    }
 	} else {
-	    create_map(Map, pads[TargetPad.index]);
-	    //console.log(Map);
-	    generic_mapping(Map, pads[TargetPad.index]);
-	    get_session();
+	    maps[TargetPad.index] = construct_map({pad:pad});
+	    maps[TargetPad.index].get_session();
 	}
     } else {
 	info_gamepad(null);
