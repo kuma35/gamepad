@@ -1,6 +1,14 @@
 # -*- coding:utf-8 mode:Python -*-
-from bottle import get, route, run, template, static_file, debug
+from bottle import request, get, route, run, template, static_file, debug, hook, default_app
+from beaker.middleware import SessionMiddleware
 debug(True) #for debug
+
+session_opts = {
+    'session.type': 'file',
+    'session.data_dir': './session/',
+    'session.auto': True,
+    'session.cookie_expires': True,
+}
 
 @route('/')
 def index() :
@@ -39,4 +47,9 @@ def from_data() :
     backetturn = request.query.bt;
     return 'Ok';
 
-run(host='192.168.115.7', port=8080, reloader=True) #for debug
+#app = beaker.middleware.SessionMiddleware(app(), session_opts)
+
+if __name__ == '__main__':
+    app = default_app()
+    app = SessionMiddleware(app, session_opts)
+    run(app=app, host='192.168.115.7', port=8080, reloader=True) #for debug
