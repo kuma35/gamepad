@@ -36,18 +36,34 @@ const rAF = window.mozRequestAnimationFrame ||
 // map
 let maps = [];
 
-const construct_base_map = function() {
+const construct_map = function(spec) {
+    // spec = { pad }
     let that;
-    let data = {	// dummy. please override inherited-object.
+
+    let last_pad = {
+	axes:[],
+	buttons:[],
+    };
+    let connect_flag = true;
+    let gamepadid;
+    let sessionid;
+    let data = {	// override construct_base_map
 	turn: '0.0',
 	beam: '0.0',
 	arm: '0.0',
 	backet: '0.0',
 	backetturn: '0.0',
     };
+    let ctrl_axes = [];
+    let ctrl_buttons = [];
 
-    that = {};	// base_mapでは特に何かから継承しない。
-    
+    // set params
+    gamepadid = spec.pad && spec.pad.id || '';
+
+    // that && inherit
+    that = {};
+
+
     // private method
     const _normal = function(v) {
 	'use strict';
@@ -206,40 +222,7 @@ const construct_base_map = function() {
     };
     backetturn_right.id = 'backetturn_right';
     that.backetturn_right = backetturn_right;
-    
 
-    return that;
-};
-
-const construct_map = function(spec) {
-    // spec = { pad }
-    let that;
-
-    let last_pad = {
-	axes:[],
-	buttons:[],
-    };
-    let connect_flag = true;
-    let gamepadid;
-    let sessionid;
-    let data = {	// override construct_base_map
-	turn: '0.0',
-	beam: '0.0',
-	arm: '0.0',
-	backet: '0.0',
-	backetturn: '0.0',
-    };
-    let ctrl_axes = [];
-    let ctrl_buttons = [];
-
-    // set params
-    gamepadid = spec.pad && spec.pad.id || '';
-
-    // that && inherit
-    that = construct_base_map();
-
-
-    // public methods
     const set_axis_label = function(index) {
 	'use strict';
 	let label = '';
