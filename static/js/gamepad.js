@@ -29,12 +29,16 @@ let TargetPad = {
     'index': -1,
     'id':'',
 };
-let AllowAjax = true;
+
 const rAF = window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.requestAnimationFrame;
 // map
 let maps = [];
+
+let Base_map = {
+    allow_ajax : true,
+}
 
 const construct_map = function(spec) {
     // spec = { pad }
@@ -57,12 +61,13 @@ const construct_map = function(spec) {
     let ctrl_axes = [];
     let ctrl_buttons = [];
 
+
+
     // set params
     gamepadid = spec.pad && spec.pad.id || '';
 
     // that && inherit
-    that = {};
-
+    that = Object.create(Base_map);	// shared allow_ajax property
 
     // private method
     const _normal = function(v) {
@@ -418,8 +423,8 @@ const construct_map = function(spec) {
     // ajax
     const expire_session = function() {
 	'use strict';
-	if (sessionid && AllowAjax) {
-	    AllowAjax = false;
+	if (sessionid && that.allow_ajax) {
+	    that.allow_ajax = false;
 	    $.ajax({
 		type:'get',
 		url:'/gp/es',
@@ -437,7 +442,7 @@ const construct_map = function(spec) {
 		$('#com-status').text('セッション expire:fail');
 	    }).always(function () {
 		sessionid = '';
-		AllowAjax = true;
+		that.allow_ajax = true;
 	    });
 	}
     };
@@ -447,13 +452,13 @@ const construct_map = function(spec) {
 	// get_session ajax error-handler
 	'use strict';
 	$('#com-status').text('セッション取得:error'+textStatus);
-	AllowAjax = true;
+	that.allow_ajax = true;
     };
 
     const get_session = function() {
 	'use strict';
-	if (AllowAjax) {
-	    AllowAjax = false;
+	if (that.allow_ajax) {
+	    that.allow_ajax = false;
 	    $.ajax({
 		type:'get',
 		url:'/gp/gs',
@@ -468,7 +473,7 @@ const construct_map = function(spec) {
 		// 注意:sessionid取得失敗時はsend()は実行しない。
 		$('#com-status').text('セッション取得:fail');
 	    }).always(function () {
-		AllowAjax = true;
+		that.allow_ajax = true;
 		console.log(sessionid);
 	    });
 	}
@@ -478,15 +483,15 @@ const construct_map = function(spec) {
     const send_error = function(jqXHR, textStatus, errorThrown) {
 	'use strict';
 	$('#com-status').text('送信:error:'+textStatus);
-	AllowAjax = true;
+	that.allow_ajax = true;
     };
     // send_error is private method no let to that.send_error
     
     const send =  function () {
 	'use strict';
 	// send data to server
-	if (AllowAjax) {
-	    AllowAjax = false;
+	if (that.allow_ajax) {
+	    that.allow_ajax = false;
 	    $.ajax({
 		type:'GET',
 		url:'/gp/sd',
@@ -509,7 +514,7 @@ const construct_map = function(spec) {
 		    console.log(data);
 		}, 1000);		
 	    }).always(function() {
-		AllowAjax = true;
+		that.allow_ajax = true;
 	    });
 	}
     };
