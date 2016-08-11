@@ -29,17 +29,49 @@ let TargetPad = {
     'index': -1,
     'id':'',
 };
-
 const rAF = window.mozRequestAnimationFrame ||
       window.webkitRequestAnimationFrame ||
       window.requestAnimationFrame;
+// wait queue
+let IntervalId; // dummy
+let Activate = {
+    span: 60*1000,
+    allow_ajax: true,
+    index: 99999,	// super big number :-)
+}
+function alive_session() {
+    'use strict';
+    console.log('in activate.alive_session');
+    if (Activate.allow_ajax) {
+	Activate.allow_ajax = false;
+	$.ajax({
+	    type:'get',
+	    url:'/gp/as',
+	    cache:false,
+	    timeout:1000,
+	}).done(function (data) {
+	    Activate.index = data;
+	    console.log('wait_queue_index:['+Activate.index+']');
+	    if (Activate.index == 0) {
+		$('#com-status').text('You can control now.');
+	    } else if (Activate.index > 0) {
+		$('#com-status').text('You are '+Activate.index+'ed guest. Please wait.');
+	    }
+	}).fail(function () {
+		$('#com-status').text('Sorry, Can not access server.');
+	}).always(function () {
+	    Activate.allow_ajax = true;
+	});
+    }
+}
+
+
 // map
 let maps = [];
 
 let Base_map = {
     allow_ajax : true,
 }
-
 const construct_map = function(spec) {
     // spec = { pad }
     let that;
@@ -731,6 +763,12 @@ function update_control_list(selector) {
     }
 }
 
+// alive session loop
+//console.log('Activate.span:'+Activate.span);
+alive_session();
+IntervalId = setInterval(alive_session, Activate.span);
+//console.log('IntervalId:'+IntervalId);
+
 //Update loop
 function scanGamepads() {
     'use strict';
@@ -750,10 +788,10 @@ function scanGamepads() {
 	    let map = maps[TargetPad.index];
 	    if (map.connected) {
 		if (map.exec()) {
-		    if (map.session_id) {
+		    if (Activate.index == 0) {
 			map.send();	// if need, send control data to server.
 		    } else {
-			console.log('no session id; no send');
+			console.log('wait queue index:'+Activate.index);
 		    }
 		}
 	    } else {
@@ -767,11 +805,11 @@ function scanGamepads() {
 		    // gamepad_id == pad.id then reuse this.
 		    map.connected = true;
 		}
-		map.get_session();
+		//map.get_session();
 	    }
 	} else {
 	    maps[TargetPad.index] = construct_map({pad:pad});
-	    maps[TargetPad.index].get_session();
+	    //maps[TargetPad.index].get_session();
 	}
     } else {
 	info_gamepad(null);
@@ -782,3 +820,4 @@ function scanGamepads() {
 
 //Start
 rAF(scanGamepads);
+

@@ -45,35 +45,41 @@ def root_file(name):
     return static_file(filename=name, root='./static')
 
 
-@route('/gp/gs')
-def get_session():
-    """gs is 'Get Session'; First access from web client. """
-    session = request.environ.get('beaker.session')
-    session.save()
-    logger.debug('session.id=[{}]'.format(session.id))
-    return '{}'.format(session.id)
-
-
-@route('/gp/eq')
-def entry_wait_queue():
-    session = request.environ.get('beaker.session')
-    session.save()
-    wait_queue.entry(session.id, datetime.today())
-    return 'OK'
-
-
 @route('/gp/as')
-def alive_sesion():
-    """Checking alive session. client request per by 10sec.
+def alive_session():
+    """Checking alive session.
+    Need reequest from client per less than expire_span_time.
+    In client, maybe use setInerval()
+    Expire entry from wait_queue over expire_span_time.
+    Entry session if not in wait_queue
+
+    :return: queue entry index. 0 is active, index > 0 is waiting.
     """
     session = request.environ.get('beaker.session')
     session['alive_time'] = datetime.today()
     session.save()
+    i = wait_queue.exist_session(session.id)
+    if i == -1:
+        wait_queue.entry(session.id, datetime.today())
+        i = wait_queue.exist_session(session.id)
+    return '{0}'.format(i)
+
+
+@route('/gp/es')
+def expire_session():
+    """ Expire now session.
+    If expired a session, re-get at alive_session quickly and
+    re-entry to wait_queue(of cource, last entry).
+    """
+    session = request.environ.get('beaker.session')
+    session.delete()
     return 'OK'
 
 
 @get('/gp/sd')
 def from_data():
+    """Send control data from client.
+    """
     turn = request.query.t
     beam = request.query.b
     arm = request.query.a
@@ -95,7 +101,7 @@ if __name__ == '__main__':
     logger.setLevel(DEBUG)
     logger.addHandler(sh)
 
-    wait_queue = WaitQueue()
+    wait_queue = WaitQueue.WaitQueue()
 
     app = default_app()
     app = SessionMiddleware(app, session_opts)
