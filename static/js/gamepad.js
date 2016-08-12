@@ -41,7 +41,7 @@ let Activate = {
 }
 function alive_session() {
     'use strict';
-    console.log('in activate.alive_session');
+    //console.log('in activate.alive_session');
     if (Activate.allow_ajax) {
 	Activate.allow_ajax = false;
 	$.ajax({
@@ -277,6 +277,27 @@ const construct_map = function(spec) {
 	$('#list-axes #'+index).next().text(label);
     };
     that.set_axis_label = set_axis_label;
+
+    const set_button_label = function(index) {
+	'use strict';
+	let label = '';
+	let key = ctrl_buttons[index].id;
+	label = $('#select-button-control #'+key).text();
+	$('#list-buttons #'+index).next().text(label);
+    };
+    that.set_button_label = set_button_label;
+
+    const update_labels = function() {
+	'use strict';
+	let i;
+	for (i=0; i < ctrl_axes.length; i++) {
+	    set_axis_label(i);
+	}
+	for (i=0; i < ctrl_buttons.length; i++) {
+	    set_button_label(i);
+	}
+    }
+    that.update_labels = update_labels;
 
     const default_control = function() {
 	'use strict';
@@ -787,6 +808,7 @@ function scanGamepads() {
 	if (maps[TargetPad.index]) {
 	    let map = maps[TargetPad.index];
 	    if (map.connected) {
+		map.update_labels();
 		if (map.exec()) {
 		    if (Activate.index == 0) {
 			map.send();	// if need, send control data to server.
