@@ -4,3 +4,7 @@ lib/*
 include/*
 __pycache__/*
 session/*
+pip-selfcheck.json
+pyvenv.cfg
+share/*
+
