@@ -58,7 +58,7 @@ def alive_session():
     session = request.environ.get('beaker.session')
     session['alive_time'] = datetime.today()
     session.save()
-    i = wait_queue.exist_session(session.id)
+    i = wait_queue.alive(session.id, datetime.today())
     if i == -1:
         wait_queue.entry(session.id, datetime.today())
         i = wait_queue.exist_session(session.id)

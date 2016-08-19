@@ -8,25 +8,25 @@ from datetime import timedelta, date, datetime
 class WaitQueue(object):
     """ Waiting queue. """
 
-    def __init__(self, active_span_time=timedelta(minutes=10)):
+    def __init__(self, active_span=timedelta(minutes=10)):
         """
         Queue top is active.
         self.queue' s item: {
                 'ssid': session.id,
                 'time': client last accessed time, }
-        Only queue top adding property 'active_start_time'
+        Only queue top adding property 'active_start'
         self.queue' s item: {
                 'ssid': session.id,
                 'time': client last accessed time,
-                'active_start_time': using resource start time, }
+                'active_start': using resource start time, }
         """
         self.queue = []
-        self.expire_span_time = timedelta(minutes=5)
-        self.active_span_time = active_span_time
+        self.expire_span = timedelta(minutes=5)
+        self.active_span = active_span
 
     def queue_pop(self, i):
         """ Pop indexed item form self.queue and
-        adding 'active_start_time' key in queue[0] if replace queue[0].
+        adding 'active_start' key in queue[0] if replace queue[0].
         >>> q=WaitQueue()
         >>> q.entry('foo', datetime(2016, 8, 3, 15, 49, 10, 61274))
         >>> q.entry('bar', datetime(2016, 8, 3, 15, 52, 50, 218))
@@ -37,7 +37,7 @@ class WaitQueue(object):
         >>> q.queue_pop(0)
         >>> len(q.queue)
         2
-        >>> 'active_start_time' in q.queue[0]
+        >>> 'active_start' in q.queue[0]
         True
         """
         try:
@@ -49,8 +49,8 @@ class WaitQueue(object):
             raise
         else:
             if len(self.queue) > 0:
-                if 'active_start_time' not in self.queue[0]:
-                    self.queue[0]['active_start_time'] = datetime.today()
+                if 'active_start' not in self.queue[0]:
+                    self.queue[0]['active_start'] = datetime.today()
 
     def exist_session(self, session_id):
         """ if exist session_id then return queue index else -1.
@@ -115,7 +115,7 @@ class WaitQueue(object):
 
     def alive(self, session_id, last_time):
         """ update self.que_time in queue entry.
-
+        :return: -1;not exist entry (or expiered), 0 and over; now queue index
         >>> q=WaitQueue()
         >>> d = {}
         >>> d['foo'] = datetime.today()
@@ -143,7 +143,7 @@ class WaitQueue(object):
         >>> e['bar'] = datetime.today()
         >>> e['tee'] = datetime.today()
         >>> q.alive('bar', e['bar'])
-        True
+        1
         >>> len(q.queue)
         3
         >>> 's={0[ssid]}.'.format(q.queue[0])
@@ -163,9 +163,7 @@ class WaitQueue(object):
         i = self.exist_session(session_id)
         if i > -1:
             self.queue[i]['time'] = last_time
-            return True
-        else:
-            return False
+        return i
 
     def active(self):
         """ get now active (first cell).
@@ -216,15 +214,14 @@ class WaitQueue(object):
         >>> 's={0[ssid]}.'.format(q.queue[1])
         's=tee.'
         """
-        expire_time = datetime.today() - self.expire_span_time
+        now = datetime.today()
         for (i, item) in enumerate(self.queue):
-            if expire_time > item['time']:
+            if now > item['time'] + self.expire_span:
                 self.queue_pop(i)
         if len(self.queue) > 1:  # Not need expire if only a item in queue.
-            if 'active_start_time' not in self.queue[0]:
-                self.queue[0]['active_start_time'] = datetime.today()
-            active_expire = datetime.today() - self.active_span_time
-            if active_expire > self.queue[0]['active_start_time']:
+            if 'active_start' not in self.queue[0]:
+                self.queue[0]['active_start'] = now
+            if now > self.queue[0]['active_start'] + self.active_span:
                 self.next()
 
     def delete(self, session_id):
