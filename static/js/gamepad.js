@@ -55,7 +55,15 @@ function alive_session() {
 	    if (Activate.index == 0) {
 		$('#com-status').text('You can control now.');
 	    } else if (Activate.index > 0) {
-		$('#com-status').text('You are '+Activate.index+'ed guest. Please wait.');
+		let str;
+		if (Activate.index == 1) {
+		    str = '2nd';
+		} else if (Activate.index == 2) {
+		    str = '3rd';
+		} else {
+		    str = (Activate.index + 1) + 'th';
+		}
+		$('#com-status').text('You are '+str+' guest. Please wait.');
 	    }
 	}).fail(function () {
 		$('#com-status').text('Sorry, Can not access server.');
@@ -274,7 +282,9 @@ const construct_map = function(spec) {
 	} else {
 	    label = $('#select-axis-control #'+key).text();
 	}
-	$('#list-axes #'+index).next().text(label);
+	if ($('#list-axes #'+index).next().text() != label) {
+	    $('#list-axes #'+index).next().text(label);
+	}
     };
     that.set_axis_label = set_axis_label;
 
@@ -283,7 +293,9 @@ const construct_map = function(spec) {
 	let label = '';
 	let key = ctrl_buttons[index].id;
 	label = $('#select-button-control #'+key).text();
-	$('#list-buttons #'+index).next().text(label);
+	if ($('#list-buttons #'+index).next().text() != label) {
+	    $('#list-buttons #'+index).next().text(label);
+	}
     };
     that.set_button_label = set_button_label;
 
