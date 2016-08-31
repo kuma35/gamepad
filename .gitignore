@@ -7,4 +7,5 @@ session/*
 pip-selfcheck.json
 pyvenv.cfg
 share/*
+doc/*
 
