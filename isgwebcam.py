@@ -20,6 +20,16 @@ session_opts = {
 }
 
 
+@route('/doc/')
+def get_devel_doc_index():
+    return static_file(filename='index.html', root='./doc/ja/_build/html')
+
+
+@route('/doc/<path:path>')
+def get_delvel_doc(path):
+    return static_file(filename=path, root='./doc/ja/_build/html')
+
+
 @route('/')
 def index():
     return static_file(filename='index.html', root='./static')
