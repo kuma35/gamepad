@@ -7,6 +7,8 @@ from bottle import request, get, route, run, template, static_file, \
     debug, hook, default_app
 from beaker.middleware import SessionMiddleware
 import WaitQueue
+import CmdServo
+import Amplifier
 
 debug(True)  # for debug
 
@@ -19,7 +21,13 @@ session_opts = {
     'session.key': 'isg_session',
 }
 
+cmd_servo_port = '/dev/ttyFT485R'
+cmd_servo_boud = 115200
+beam_servo = 1  # servo id
 
+
+#  routing
+    
 @route('/doc/')
 def get_devel_doc_index():
     return static_file(filename='index.html', root='./doc/ja/_build/html')
@@ -90,12 +98,37 @@ def expire_session():
 def from_data():
     """Send control data from client.
     """
+    beam_amp = Amplifier.BeamAmplifier()
+    
     turn = request.query.t
     beam = request.query.b
     arm = request.query.a
     backet = request.query.bk
     backetturn = request.query.bt
-    return 'Ok'
+
+    beam_angle = beam_amp.get_beam_angle(beam)
+    if beam_angle > 0:
+        ser.serial.Serial(cmd_servo_port,
+                          cmd_servo_boud,
+                          timeout=1)
+        cmd_ack = CmdAsk()
+        cmd_ack.prepare(beam_servo)
+        cmd_ack.execute(ser)
+        if len(cmd_ack.recv) == 0 or cmd_ack.recv[0] != bytes([7]):
+            logger.warn('can not access beam servo.')
+            return ' Ok'
+        cmd_info = CmdInfo()
+        cmd_info.prepare(cmd_servo_port, 5)
+        cmd_info.execute(ser)
+        cmd_info.info()
+        # set angle to beam servo
+        cmd_angle = CmdAngle()
+        #cmd.prepare()
+        cmd_angle.execute()
+        #cmd.info() to return to web client...
+        ser.close()
+    else:
+        return 'Ok'
 
 
 if __name__ == '__main__':
