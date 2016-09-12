@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Waiting queue
+from logging import getLogger, NullHandler, DEBUG
 import time
 from datetime import timedelta, date, datetime
 
@@ -8,7 +9,7 @@ from datetime import timedelta, date, datetime
 class WaitQueue(object):
     """ Waiting queue. """
 
-    def __init__(self, active_span=timedelta(minutes=10)):
+    def __init__(self, logger=None, active_span=timedelta(minutes=10)):
         """
         Queue top is active.
         self.queue' s item: {
@@ -23,6 +24,14 @@ class WaitQueue(object):
         self.queue = []
         self.expire_span = timedelta(minutes=5)
         self.active_span = active_span
+        if logger is None:
+            self.logger = getLogger(__name__)
+            sh = NullHandler()
+            sh.setLevel(DEBUG)
+            self.logger.setLevel(DEBUG)
+            self.logger.addHandler(sh)
+        else:
+            self.logger = logger
 
     def queue_pop(self, i):
         """ Pop indexed item form self.queue and
