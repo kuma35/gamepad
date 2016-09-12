@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 # Controlling FUTABA RS405CB
 # Web service version.
-import array
+from logging import getLogger, NullHandler, DEBUG
 import pprint
+import array
 import time
 # import locale
 import serial
@@ -20,10 +21,22 @@ class CmdServoException(object):
 class CmdServo(object):
     """ Base class for servo commands. """
 
-    def __init__(self):
+    def __init__(self, logger=None):
         self.packet = []
         self.recv = []
-        self.label_fmt = '{0:>30}'
+        if logger is None:
+            self.logger = getLogger(__name__)
+            sh = NullHandler()
+            sh.setLevel(DEBUG)
+            self.logger.setLevel(DEBUG)
+            self.logger.addHandler(sh)
+        else:
+            self.logger = logger
+
+    def int_l_h(memory):
+        return int.from_bytes(list(memory[0:2]),
+                              'little',
+                              signed=True)
 
     def get_checksum(self, packet):
         """ calculate checksum byte from packet. """
@@ -41,97 +54,83 @@ class CmdServo(object):
             raise CmdServoException('no prepare packet. '
                                     'coll prepare() before execute.')
 
-    def print(self, pp):
+    def info(self, pp):
         """ pretty print recieve packet. """
         pass
-
-Label_fmt = '{l:>30}'
-
-
-def print_l_h(title, memory):
-    print((Label_fmt+':{v:5}({bl:#x},{bh:#x})')
-          .format(l=title,
-                  v=int.from_bytes(list(memory[0:2]),
-                                   'little',
-                                   signed=True),
-                  bl=memory[0],
-                  bh=memory[1]))
-
-
-def print_short_packet_header(recv):
-    """ print short packet header. """
-
-    print((Label_fmt+':{bl:#x},{bh:#x}')
-          .format(l='Header', bl=recv[0], bh=recv[1]))
-    print((Label_fmt+':{v}').format(l='ID', v=recv[2]))
-    flags = []
-    if recv[3] & 0b10000000:
-        flags.append('Temp limit error')
-    if recv[3] & 0b00100000:
-        flags.append('Temp warn')
-    if recv[3] & 0b00001000:
-        flags.append('Flash write error')
-    if recv[3] & 0b00000001:
-        flags.append('Received packet can not processing')
-    print((Label_fmt+':{v:#010b} {detail}')
-          .format(l='Flags',
-                  v=recv[3],
-                  detail=','.join(flags)))  # 08b -> #010b :-)
-    print((Label_fmt+':{v:#x}').format(l='Address', v=recv[4]))
-    print((Label_fmt+':{v}').format(l='Length', v=recv[5]))
-    print((Label_fmt+':{v}').format(l='Count(1)', v=recv[6]))
-
-
-def print_section_3(memory):
-    """ memory No.00-29. """
-
-    print((Label_fmt+':{bl:#x},{bh:#x}').
-          format(l='Model Number L,H',
-                 bl=memory[0],
-                 bh=memory[1]))
-    print((Label_fmt+':{v}').format(l='Firmware Version', v=memory[2]))
-    print((Label_fmt+':{v}').format(l='Servo ID', v=memory[4]))
-    print((Label_fmt+':{v}').format(l='Reverse', v=memory[5]))
-    print((Label_fmt+':{v:#x}').format(l='Baud Rate', v=memory[6]))
-    print((Label_fmt+':{v}').format(l='Return Delay', v=memory[7]))
-    print_l_h('CW Angle Limit L,H', memory[8:10])
-    print_l_h('CCW Angle Limit L,H', memory[10:12])
-    print_l_h('Temperture Limit L,H', memory[14:16])
-    print((Label_fmt+':{v}').format(l='Damper', v=memory[20]))
-    print((Label_fmt+':{v}').format(l='Torque in Silence', v=memory[22]))
-    print((Label_fmt+':{v}').format(l='Warm-up Time', v=memory[23]))
-    print((Label_fmt+':{v}')
-          .format(l='CW Compliance Margin', v=memory[24]))
-    print((Label_fmt+':{v}')
-          .format(l='CCW Compliance Margin', v=memory[25]))
-    print((Label_fmt+':{v}').format(l='CW Compliance Slope', v=memory[26]))
-    print((Label_fmt+':{v}')
-          .format(l='CCW Compliance Slope', v=memory[27]))
-    print_l_h('Punch L,H', memory[28:30])
-
-
-def print_section_5(memory):
-    """ memory No.30-59.  offset 30"""
-
-    print_l_h('Goal Posision L,H', memory[0:2])
-    print_l_h('Goal Time L,H', memory[2:4])
-    print((Label_fmt+':{v}').format(l='Max Torque', v=memory[5]))
-    print((Label_fmt+':{v}').format(l='Torque Enable', v=memory[6]))
-    print_l_h('Present Posion L,H', memory[12:14])
-    print_l_h('Present Time L,H', memory[14:16])
-    print_l_h('Present Speed L,H', memory[16:18])
-    print_l_h('Present Current L,H', memory[18:20])
-    print_l_h('Present Temperture L,H', memory[20:22])
-    print_l_h('Present Volts L,H', memory[22:24])
 
 
 class CmdInfo(CmdServo):
     """ get servo infomation memory. """
 
-    def __init__(self):
-        super(CmdInfo, self).__init__()
+    def __init__(self, logger=None):
+        super(CmdInfo, self).__init__(logger)
+        self.mem = {}
 
-    def prepare(self, servo_id, section, addr, length):
+    def info_short_packet_header(self, recv):
+        """ dict for short packet header. """
+        self.mem['packet_header'] = '{bl:#x}{bh:#x}'.format(bl=recv[0],
+                                                            bh=recv[1])
+        self.mem['servo_id'] = recv[2]
+        self.mem['flag_value'] = recv[3]
+        flags = []
+        if recv[3] & 0b10000000:
+            flags.append('Temp limit error')
+        if recv[3] & 0b00100000:
+            flags.append('Temp warn')
+        if recv[3] & 0b00001000:
+            flags.append('Flash write error')
+        if recv[3] & 0b00000001:
+            flags.append('Received packet can not processing')
+        self.mem['flags'] = flags
+        self.mem['address'] = recv[4]
+        self.mem['length'] = recv[5]
+        self.mem['count'] = recv[6]
+
+    def info_section_3(self, memory):
+        """ memory No.00-29. """
+        self.mem['Model_Number_L'] = memory[0]
+        self.mem['Model_Number_H'] = memory[1]
+        self.mem['Firmware_Version'] = memory[2]
+        self.mem['Servo_ID'] = memory[4]
+        self.mem['Reverse'] = memory[5]
+        self.mem['Boud_Rate'] = memory[6]
+        self.mem['Return_Delay'] = memory[7]
+        self.mem['CW_Angle_Limit'] = self.int_l_h(memory[8:10])
+        self.mem['CCW_Angle_Limit'] = self.int_l_h(memory[10:12])
+        self.mem['Temperture_Limit'] = self.int_l_h(memory[14:16])
+        self.mem['Damper'] = memory[20]
+        self.mem['Torque_in_Silence'] = memory[22]
+        self.mem['Warm_up_Time'] = memory[23]
+        self.mem['CW_Compliance_Margin'] = memory[24]
+        self.mem['CCW_Compliance_Margin'] = memory[25]
+        self.mem['CW_Compliance_Slope'] = memory[26]
+        self.mem['CCW_Compliance_Slope'] = memory[27]
+        self.mem['Punch'] = self.int_l_h(memory[28:30])
+
+    def info_section_5(self, memory):
+        """ memory No.30-59.  offset 30"""
+        self.mem['Goal_Position'] = self.int_l_h(memory[0:2])
+        self.mem['Goal_Time'] = self.int_l_h(memory[2:4])
+        self.mem['Max_Torque'] = memory[5]
+        self.mem['Torque_Enable'] = memory[6]
+        self.mem['Present_Posion'] = self.int_l_h(memory[12:14])
+        self.mem['Present_Time'] = self.int_l_h(memory[14:16])
+        self.mem['Present_Speed'] = self.int_l_h(memory[16:18])
+        self.mem['Present_Current'] = self.int_l_h(memory[18:20])
+        self.mem['Present_Temperture'] = self.int_l_h(memory[20:22])
+        self.mem['Present_Volts'] = self.int_l_h(memory[22:24])
+
+    def prepare(self, servo_id, section, addr=0, length=0):
+        """
+        section:
+         3(0011b) request memory map No.00 to No.29
+         5(0101b) request memory map No.30 to No.59
+         7(0111b) request memory map No.20 to No.29
+         9(1001b) request memory map No.42 to No.59
+        11(1011b) request memory map No.30 to No.41
+        13(1101b) request memory map No.60 to No.127
+        15(1111b) request from specify addr and specify length...
+        """
         self.section = section
         if section in [3, 5, 7, 9, 11, 13]:
             self.packet = array.array('B',
@@ -165,26 +164,26 @@ class CmdInfo(CmdServo):
         return self.recv
 
     def info(self, pp):
-        print('Returned packet:')
+        logger.debug('Returned packet:')
         sum = self.recv[2]
         for value in self.recv[3:-1]:
             sum ^= value
-        print('calculate checksum:{0}'.format(sum))
-        print('recv checksum:{0}'.format(self.recv[-1]))
+        logger.debug('calculate checksum:{0}'.format(sum))
+        logger.debug('recv checksum:{0}'.format(self.recv[-1]))
         if sum == ord(self.recv[-1]):
-            print('checksum OK')
+            logger.debug('checksum OK')
         else:
-            print('checksum NG')
-        print_short_packet_header(self.recv)
+            logger.debug('checksum NG')
+        self.info_short_packet_header()
         if self.section == 3:
-            print_section_3(self.recv[7:-1])
+            self.info_section_3(self.recv[7:-1])
         elif self.section == 5:
-            print_section_5(self.recv[7:-1])
+            self.info_section_5(self.recv[7:-1])
         else:
-            print("Data:", end='')
-            pp.pprint(self.recv[7:-1])
-        print((self.label_fmt+':{1:#x}')
-              .format('Checksum', ord(self.recv[-1])))
+            logger.debug("Data:", end='')
+            logger.debug(pp.pformat(self.recv[7:-1]))
+        logger.debug('{0}:{1:#x}'.format('Checksum',
+                                         ord(self.recv[-1])))
 
 
 class CmdAck(CmdServo):
@@ -209,8 +208,8 @@ class CmdAck(CmdServo):
         return self.recv
 
     def info(self, pp):
-        print('ACK(\\x07):', end='')
-        pp.pprint(self.recv)
+        logger.debug('ACK(\\x07):', end='')
+        logger.debug(pp.pformat(self.recv))
 
 
 class CmdSetId(CmdServo):
@@ -286,7 +285,7 @@ class CmdReboot(CmdServo):
 
 
 class CmdAngle(CmdServo):
-    """ Goal Angle and Goal Time. Please later Torque ON."""
+    """ Goal Angle and Goal Time. Please Torque ON first!"""
 
     def prepare(self, servo_id, degree, speed):
         degree_packet = list(degree.to_bytes(2, 'little', signed=True))
