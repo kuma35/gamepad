@@ -1,11 +1,13 @@
 # -*- coding:utf-8 mode:Python -*-
-from logging import getLogger, StreamHandler, DEBUG, Formatter
+from logging import getLogger, FileHandler, DEBUG, Formatter
 from pprint import pformat
 import time
 from datetime import datetime
 from bottle import request, get, route, run, template, static_file, \
     debug, hook, default_app
 from beaker.middleware import SessionMiddleware
+import serial
+import pprint
 import WaitQueue
 import CmdServo
 import Amplifier
@@ -24,7 +26,34 @@ session_opts = {
 cmd_servo_port = '/dev/ttyFT485R'
 cmd_servo_boud = 115200
 beam_servo = 1  # servo id
+arm_servo = 2  # servo id
 
+def move_cmd_servo(servo_id, step_angle):
+    pp = pprint.PrettyPrinter(indent=4)
+    if step_angle != 0:
+        ser = serial.Serial(cmd_servo_port,
+                            cmd_servo_boud,
+                            timeout=1)
+        cmd_ack = CmdServo.CmdAck(logger)
+        cmd_ack.prepare(servo_id)
+        cmd_ack.execute(ser)
+        if len(cmd_ack.recv) == 0 or cmd_ack.recv[0] != bytes([7]):
+            logger.warn('can not access servo id 1.')
+            return ' Ok'
+        cmd_info = CmdServo.CmdInfo(logger)
+        cmd_info.prepare(servo_id, 5)
+        cmd_info.execute(ser)
+        cmd_info.info(pp)
+        cmd_torque = CmdServo.CmdTorque(logger)
+        cmd_torque.prepare(servo_id, 'on')
+        cmd_torque.execute(ser)
+        logger.debug('Present Posison:{0}'
+                     .format(cmd_info.mem['Present_Posion']))
+        new_angle = cmd_info.mem['Present_Posion'] + step_angle
+        cmd_angle = CmdServo.CmdAngle(logger)
+        cmd_angle.prepare(servo_id, new_angle, 10)
+        cmd_angle.execute(ser)
+        ser.close()
 
 #  routing
     
@@ -98,38 +127,25 @@ def expire_session():
 def from_data():
     """Send control data from client.
     """
-    beam_amp = Amplifier.BeamAmplifier()
+    pp = pprint.PrettyPrinter(indent=4)
     
     turn = request.query.t
-    beam = request.query.b
-    arm = request.query.a
+    beam = float(request.query.b)
+    arm = float(request.query.a)
     backet = request.query.bk
     backetturn = request.query.bt
 
-    beam_angle = beam_amp.get_beam_angle(beam)
-    if beam_angle > 0:
-        ser.serial.Serial(cmd_servo_port,
-                          cmd_servo_boud,
-                          timeout=1)
-        cmd_ack = CmdAsk()
-        cmd_ack.prepare(beam_servo)
-        cmd_ack.execute(ser)
-        if len(cmd_ack.recv) == 0 or cmd_ack.recv[0] != bytes([7]):
-            logger.warn('can not access beam servo.')
-            return ' Ok'
-        cmd_info = CmdInfo()
-        cmd_info.prepare(cmd_servo_port, 5)
-        cmd_info.execute(ser)
-        cmd_info.info()
-        # set angle to beam servo
-        cmd_angle = CmdAngle()
-        #cmd.prepare()
-        cmd_angle.execute()
-        #cmd.info() to return to web client...
-        ser.close()
-    else:
-        return 'Ok'
+    beam_amp = Amplifier.BeamAmplifier()
+    beam_angle = beam_amp.get_angle(beam)
+    logger.debug('beam_angle={0}'.format(beam_angle))
+    move_cmd_servo(beam_servo, beam_angle)
 
+    arm_amp = Amplifier.ArmAmplifier()
+    arm_angle = arm_amp.get_angle(arm)
+    logger.debug('arm_angle={0}'.format(arm_angle))
+    move_cmd_servo(arm_servo, arm_angle)
+
+    return 'OK'
 
 if __name__ == '__main__':
     logger = getLogger(__name__)
@@ -138,7 +154,7 @@ if __name__ == '__main__':
                           '%(filename)s:%(lineno)d - '
                           '%(funcName)s - '
                           '%(message)s')
-    sh = StreamHandler()
+    sh = FileHandler('webcam4.log')
     sh.setLevel(DEBUG)
     sh.setFormatter(formatter)
     logger.setLevel(DEBUG)
