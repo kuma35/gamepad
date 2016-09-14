@@ -97,7 +97,12 @@ const construct_map = function(spec) {
 	arm: '0.0',
 	backet: '0.0',
 	backetturn: '0.0',
+	torque_off: '0.0',
     };
+    let last_data ={};
+    for (var k in data) {
+	last_data[k] = data[k];
+    }
     let ctrl_axes = [];
     let ctrl_buttons = [];
 
@@ -267,6 +272,13 @@ const construct_map = function(spec) {
     };
     backetturn_right.id = 'backetturn_right';
     that.backetturn_right = backetturn_right;
+
+    const torque_off = function(v) {
+	'use strict';
+	data.torque_off = _normal(v);
+    };
+    torque_off.id = 'torque_off';
+    that.torque_off = torque_off;
 
     const set_axis_label = function(index) {
 	'use strict';
@@ -544,6 +556,20 @@ const construct_map = function(spec) {
 	}
     };
     that.get_session = get_session;
+
+    const is_data_change = function(d, last_d) {
+	'use strict';
+	for (var k in d) {
+	    if (k in last_d) {
+		if (d[k] != 0.0 || d[k] != last_d[k]) {
+		    return true;
+		}
+	    } else {
+		return true;
+	    }
+	}
+	return false;
+    };
     
     const send_error = function(jqXHR, textStatus, errorThrown) {
 	'use strict';
@@ -555,6 +581,10 @@ const construct_map = function(spec) {
     const send =  function () {
 	'use strict';
 	// send data to server
+	if (!is_data_change(data, last_data)) {
+	    console.log('data and last-data is all zero.');
+	    return;
+	}
 	if (that.allow_ajax) {
 	    that.allow_ajax = false;
 	    $.ajax({
@@ -568,12 +598,16 @@ const construct_map = function(spec) {
 		    'a':data.arm,
 		    'bk':data.backet,
 		    'bt':data.backetturn,
+		    'to':data.torque_off,
 		},
 		//error:this.send_error,
 	    }).done(function(data) {
+		for (var k in data) {
+		    last_data[k] = data[k];
+		}
 		setTimeout(function() {
 		    console.log(data);
-		}, 1000);		
+		}, 1000);
 	    }).fail(function(data) {
 		setTimeout(function() {
 		    console.log(data);
