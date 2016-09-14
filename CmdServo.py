@@ -12,6 +12,12 @@ import argparse
 import sys
 
 
+def int_l_h(memory):
+    return int.from_bytes(list(memory[0:2]),
+                          'little',
+                          signed=True)
+
+
 class CmdServoException(object):
     """ CmdServo and sub class exception. """
 
@@ -33,11 +39,6 @@ class CmdServo(object):
         else:
             self.logger = logger
 
-    def int_l_h(memory):
-        return int.from_bytes(list(memory[0:2]),
-                              'little',
-                              signed=True)
-
     def get_checksum(self, packet):
         """ calculate checksum byte from packet. """
 
@@ -46,13 +47,36 @@ class CmdServo(object):
             checksum ^= value
         return checksum
 
+    def check_return_packet(self, recv):
+        """After CmdServo::execute(), check received return packet.
+        True:received return-packet and checksum OK.
+        False:can not received or checksum NG.
+        """
+        if len(recv) == 0:
+            self.logger.debug('NG:zero')
+            return False
+        if self.recv[0] != 0xfd or self.recv[1] != 0xdf:
+            self.logger.debug('NG:packet header')
+            return False
+        if self.get_checksum(self.recv[:-1]) != ord(self.recv[-1]):
+            self.logger.debug('NG:checksum NG')
+            return False
+        return True
+
     def prepare(self):
         pass
 
     def execute(self):
+        """Sending short-pakect to specified servo and
+        receiving return-packet.
+        True:Received return-packet and checksum OK.
+        False:Can not received return-packet or checksum NG.
+        Notice:alread returned FALSE in this base class.
+        """
         if self.packet is None:
             raise CmdServoException('no prepare packet. '
                                     'coll prepare() before execute.')
+        return False
 
     def info(self, pp):
         """ pretty print recieve packet. """
@@ -68,8 +92,8 @@ class CmdInfo(CmdServo):
 
     def info_short_packet_header(self, recv):
         """ dict for short packet header. """
-        self.mem['packet_header'] = '{bl:#x}{bh:#x}'.format(bl=recv[0],
-                                                            bh=recv[1])
+        self.mem['packet_header'] = '{bl:X}{bh:X}'.format(bl=recv[0],
+                                                          bh=recv[1])
         self.mem['servo_id'] = recv[2]
         self.mem['flag_value'] = recv[3]
         flags = []
@@ -95,9 +119,9 @@ class CmdInfo(CmdServo):
         self.mem['Reverse'] = memory[5]
         self.mem['Boud_Rate'] = memory[6]
         self.mem['Return_Delay'] = memory[7]
-        self.mem['CW_Angle_Limit'] = self.int_l_h(memory[8:10])
-        self.mem['CCW_Angle_Limit'] = self.int_l_h(memory[10:12])
-        self.mem['Temperture_Limit'] = self.int_l_h(memory[14:16])
+        self.mem['CW_Angle_Limit'] = int_l_h(memory[8:10])
+        self.mem['CCW_Angle_Limit'] = int_l_h(memory[10:12])
+        self.mem['Temperture_Limit'] = int_l_h(memory[14:16])
         self.mem['Damper'] = memory[20]
         self.mem['Torque_in_Silence'] = memory[22]
         self.mem['Warm_up_Time'] = memory[23]
@@ -105,20 +129,20 @@ class CmdInfo(CmdServo):
         self.mem['CCW_Compliance_Margin'] = memory[25]
         self.mem['CW_Compliance_Slope'] = memory[26]
         self.mem['CCW_Compliance_Slope'] = memory[27]
-        self.mem['Punch'] = self.int_l_h(memory[28:30])
+        self.mem['Punch'] = int_l_h(memory[28:30])
 
     def info_section_5(self, memory):
         """ memory No.30-59.  offset 30"""
-        self.mem['Goal_Position'] = self.int_l_h(memory[0:2])
-        self.mem['Goal_Time'] = self.int_l_h(memory[2:4])
+        self.mem['Goal_Position'] = int_l_h(memory[0:2])
+        self.mem['Goal_Time'] = int_l_h(memory[2:4])
         self.mem['Max_Torque'] = memory[5]
         self.mem['Torque_Enable'] = memory[6]
-        self.mem['Present_Posion'] = self.int_l_h(memory[12:14])
-        self.mem['Present_Time'] = self.int_l_h(memory[14:16])
-        self.mem['Present_Speed'] = self.int_l_h(memory[16:18])
-        self.mem['Present_Current'] = self.int_l_h(memory[18:20])
-        self.mem['Present_Temperture'] = self.int_l_h(memory[20:22])
-        self.mem['Present_Volts'] = self.int_l_h(memory[22:24])
+        self.mem['Present_Posion'] = int_l_h(memory[12:14])
+        self.mem['Present_Time'] = int_l_h(memory[14:16])
+        self.mem['Present_Speed'] = int_l_h(memory[16:18])
+        self.mem['Present_Current'] = int_l_h(memory[18:20])
+        self.mem['Present_Temperture'] = int_l_h(memory[20:22])
+        self.mem['Present_Volts'] = int_l_h(memory[22:24])
 
     def prepare(self, servo_id, section, addr=0, length=0):
         """
@@ -151,7 +175,7 @@ class CmdInfo(CmdServo):
                                        length,
                                        0x00])
         else:
-            raise CommandServoException("invalid section value")
+            raise CmdServoException("invalid section value")
         checksum = self.get_checksum(self.packet)
         self.packet.append(checksum)
         return self.packet
@@ -161,29 +185,29 @@ class CmdInfo(CmdServo):
         self.recv.extend(list(ser.read(7)))
         self.recv.extend(list(ser.read(self.recv[5])))
         self.recv.append(ser.read())  # checksum
-        return self.recv
+        return self.check_return_packet(self.recv)
 
     def info(self, pp):
-        logger.debug('Returned packet:')
+        self.logger.debug('Returned packet:')
         sum = self.recv[2]
         for value in self.recv[3:-1]:
             sum ^= value
-        logger.debug('calculate checksum:{0}'.format(sum))
-        logger.debug('recv checksum:{0}'.format(self.recv[-1]))
+        self.logger.debug('calculate checksum:{0}'.format(sum))
+        self.logger.debug('recv checksum:{0}'.format(self.recv[-1]))
         if sum == ord(self.recv[-1]):
-            logger.debug('checksum OK')
+            self.logger.debug('checksum OK')
         else:
-            logger.debug('checksum NG')
-        self.info_short_packet_header()
+            self.logger.debug('checksum NG')
+        self.info_short_packet_header(self.recv)
         if self.section == 3:
             self.info_section_3(self.recv[7:-1])
         elif self.section == 5:
             self.info_section_5(self.recv[7:-1])
         else:
-            logger.debug("Data:", end='')
-            logger.debug(pp.pformat(self.recv[7:-1]))
-        logger.debug('{0}:{1:#x}'.format('Checksum',
-                                         ord(self.recv[-1])))
+            self.logger.debug("Data:", end='')
+            self.logger.debug(pp.pformat(self.recv[7:-1]))
+        self.logger.debug('{0}:{1:#x}'.format('Checksum',
+                                              ord(self.recv[-1])))
 
 
 class CmdAck(CmdServo):
@@ -205,11 +229,15 @@ class CmdAck(CmdServo):
         super(CmdAck, self).execute()
         ser.write(self.packet)
         self.recv.append(ser.read())
-        return self.recv
+        if len(self.recv) == 0:
+            return False
+        if self.recv[0] != bytes([7]):
+            return False
+        return True
 
     def info(self, pp):
-        logger.debug('ACK(\\x07):', end='')
-        logger.debug(pp.pformat(self.recv))
+        self.logger.debug('ACK(\\x07):', end='')
+        self.logger.debug(pp.pformat(self.recv))
 
 
 class CmdSetId(CmdServo):
@@ -346,7 +374,7 @@ class CmdTorque(CmdServo):
         elif flag == 'break':
             value = 2
         else:
-            raise CommandServoException('unknown torque flag. '
+            raise CmdServoException('unknown torque flag. '
                                         'valid on/off/break.')
         self.packet = array.array('B',
                                   [0xFA, 0xAF,
