@@ -65,3 +65,24 @@ class BeamAmplifier(Amplifier):
             'walk':5,
             'trot':10,
         }
+
+class ArmAmplifier(Amplifier):
+    """ for beam input to armservo
+    Input value is -1.0 to 1.0.
+    0.0 is center.
+    'stay' is center value range.
+    'walk' is slow move.
+    'trot' is move (over walk).
+    """
+    def __init__(self, logger=None):
+        super(ArmAmplifier, self).__init__(logger)
+        self.sensitive = {
+            'stay':0.3,
+            'walk':0.6,
+            'trot':1.0,
+        }
+        self.angle = {
+            'stay':0,
+            'walk':5,
+            'trot':10,
+        }
