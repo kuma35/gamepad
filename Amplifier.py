@@ -6,21 +6,15 @@ class Amplifier(object):
     """Amplify input-value to step-angle.
     Input value is -1.0 to 1.0.
     0.0 is center.
-    'stay' is center value range.
-    'walk' is slow move.
-    'trot' is move (over walk).
+    Converting table is self.cnv
+    sens < self.cnv[x]['sep']
     """
     def __init__(self, logger=None):
-        self.sensitive = {
-            'stay':0.3,
-            'walk':0.6,
-            'trot':1.0,
-        }
-        self.angle = {
-            'stay':0,
-            'walk':1,
-            'trot':2,
-        }
+        self.cnv = [{'sep':-0.6, 'step':-2, 'speed':10,},
+                    {'sep':-0.2, 'step':-1, 'speed':10,},
+                    {'sep':0.3, 'step':0, 'speed':0,},
+                    {'sep':0.7, 'step':1, 'speed':10,},]
+        self.cnv_last = {'step':2, 'speed':10,}
         if logger is None:
             self.logger = getLogger(__name__)
             sh = NullHandler()
@@ -34,55 +28,35 @@ class Amplifier(object):
         """
         sense value: -1.0 to 1.0
         """
-        sign = 1;
-        if sense < 0:
-            sign = -1;
-        if abs(sense) < self.sensitive['stay']:
-            return self.angle['stay'] * sign
-        elif abs(sense) < self.sensitive['walk']:
-            return self.angle['walk'] * sign
-        else:
-            return self.angle['trot'] * sign
+        for x in self.cnv:
+            if sense < x['sep']:
+                return (x['step'], x['speed'])
+        return (self.cnv_last['step'], self.cnv_last['speed'])
 
 
 class BeamAmplifier(Amplifier):
     """ for beam input to beam servo
     Input value is -1.0 to 1.0.
     0.0 is center.
-    'stay' is center value range.
-    'walk' is slow move.
-    'trot' is move (over walk).
     """
     def __init__(self, logger=None):
         super(BeamAmplifier, self).__init__(logger)
-        self.sensitive = {
-            'stay':0.3,
-            'walk':0.6,
-            'trot':1.0,
-        }
-        self.angle = {
-            'stay':0,
-            'walk':5,
-            'trot':10,
-        }
+        self.cnv = [{'sep':-0.6, 'step':-100, 'speed':10,},
+                    {'sep':-0.2, 'step':-50, 'speed':10,},
+                    {'sep':0.3, 'step':0, 'speed':0,},
+                    {'sep':0.7, 'step':50, 'speed':10,},]
+        self.cnv_last = {'step':100, 'speed':10,}
+
 
 class ArmAmplifier(Amplifier):
     """ for beam input to armservo
     Input value is -1.0 to 1.0.
     0.0 is center.
-    'stay' is center value range.
-    'walk' is slow move.
-    'trot' is move (over walk).
     """
     def __init__(self, logger=None):
         super(ArmAmplifier, self).__init__(logger)
-        self.sensitive = {
-            'stay':0.3,
-            'walk':0.6,
-            'trot':1.0,
-        }
-        self.angle = {
-            'stay':0,
-            'walk':5,
-            'trot':10,
-        }
+        self.cnv = [{'sep':-0.6, 'step':-100, 'speed':10,},
+                    {'sep':-0.2, 'step':-50, 'speed':10,},
+                    {'sep':0.3, 'step':0, 'speed':0,},
+                    {'sep':0.7, 'step':50, 'speed':10,},]
+        self.cnv_last = {'step':100, 'speed':10,}
