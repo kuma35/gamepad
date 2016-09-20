@@ -28,6 +28,7 @@ cmd_servo_boud = 115200
 beam_servo = 1  # servo id
 arm_servo = 2  # servo id
 
+
 def move_cmd_servo(servo_id, step_angle):
     pp = pprint.PrettyPrinter(indent=4)
     if step_angle != 0:
@@ -55,8 +56,21 @@ def move_cmd_servo(servo_id, step_angle):
         cmd_angle.execute(ser)
         ser.close()
 
+
+def torque_off_cmd_servos():
+    ser = serial.Serial(cmd_servo_port,
+                        cmd_servo_boud,
+                        timeout=1)
+    for servo_id in [1, 2]:
+        cmd = CmdServo.CmdTorque(logger)
+        cmd.prepare(servo_id, 'off')
+        cmd.execute(ser)
+        del cmd
+    ser.close()
+
 #  routing
-    
+
+
 @route('/doc/')
 def get_devel_doc_index():
     return static_file(filename='index.html', root='./doc/ja/_build/html')
@@ -128,21 +142,26 @@ def from_data():
     """Send control data from client.
     """
     pp = pprint.PrettyPrinter(indent=4)
-    
+
     turn = request.query.t
     beam = float(request.query.b)
     arm = float(request.query.a)
     backet = request.query.bk
     backetturn = request.query.bt
+    torque_off = float(request.query.to)
+
+    if torque_off == 1.0:
+        torque_off_cmd_servos()
+        return 'OK'
 
     beam_amp = Amplifier.BeamAmplifier()
     beam_angle = beam_amp.get_angle(beam)
-    logger.debug('beam_angle={0}'.format(beam_angle))
+    # logger.debug('beam_angle={0}'.format(beam_angle))
     move_cmd_servo(beam_servo, beam_angle)
 
     arm_amp = Amplifier.ArmAmplifier()
     arm_angle = arm_amp.get_angle(arm)
-    logger.debug('arm_angle={0}'.format(arm_angle))
+    # logger.debug('arm_angle={0}'.format(arm_angle))
     move_cmd_servo(arm_servo, arm_angle)
 
     return 'OK'
