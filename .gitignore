@@ -10,4 +10,6 @@ pyvenv.cfg
 share/*
 doc/*
 log/*
-arduino/*
+arduino/PwmServo/.build/*
+arduino/PwmServo/lib/*
+arduino/PwmServo/src/build-*
