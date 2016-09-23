@@ -1,6 +1,5 @@
 # -*- coding:utf-8 mode:Python -*-
 from logging import getLogger, FileHandler, DEBUG, Formatter
-from pprint import pformat
 import time
 from datetime import datetime
 from bottle import request, get, route, run, template, static_file, \
@@ -30,7 +29,6 @@ arm_servo = 2  # servo id
 
 
 def move_cmd_servo(servo_id, step_angle):
-    pp = pprint.PrettyPrinter(indent=4)
     if step_angle != 0:
         ser = serial.Serial(cmd_servo_port,
                             cmd_servo_boud,
@@ -38,13 +36,13 @@ def move_cmd_servo(servo_id, step_angle):
         cmd_ack = CmdServo.CmdAck(logger)
         cmd_ack.prepare(servo_id)
         cmd_ack.execute(ser)
-        if len(cmd_ack.recv) == 0 or cmd_ack.recv[0] != bytes([7]):
+        if len(cmd_ack.recv) == 0 or cmd_ack.recv[0] != 7:
             logger.warn('can not access servo id 1.')
             return ' Ok'
         cmd_info = CmdServo.CmdInfo(logger)
         cmd_info.prepare(servo_id, 5)
         cmd_info.execute(ser)
-        cmd_info.info(pp)
+        cmd_info.info()
         cmd_torque = CmdServo.CmdTorque(logger)
         cmd_torque.prepare(servo_id, 'on')
         cmd_torque.execute(ser)
@@ -52,7 +50,7 @@ def move_cmd_servo(servo_id, step_angle):
                      .format(cmd_info.mem['Present_Posion']))
         new_angle = cmd_info.mem['Present_Posion'] + step_angle
         cmd_angle = CmdServo.CmdAngle(logger)
-        cmd_angle.prepare(servo_id, new_angle, 10)
+        cmd_angle.prepare(servo_id, new_angle, 300)
         cmd_angle.execute(ser)
         ser.close()
 
@@ -141,8 +139,6 @@ def expire_session():
 def from_data():
     """Send control data from client.
     """
-    pp = pprint.PrettyPrinter(indent=4)
-
     turn = request.query.t
     beam = float(request.query.b)
     arm = float(request.query.a)
