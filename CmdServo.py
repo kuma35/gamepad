@@ -3,7 +3,6 @@
 # Controlling FUTABA RS405CB
 # Web service version.
 from logging import getLogger, NullHandler, DEBUG
-import pprint
 import array
 import time
 # import locale
@@ -58,7 +57,7 @@ class CmdServo(object):
         if self.recv[0] != 0xfd or self.recv[1] != 0xdf:
             self.logger.debug('NG:packet header')
             return False
-        if self.get_checksum(self.recv[:-1]) != ord(self.recv[-1]):
+        if self.get_checksum(self.recv[:-1]) != self.recv[-1]:
             self.logger.debug('NG:checksum NG')
             return False
         return True
@@ -78,7 +77,7 @@ class CmdServo(object):
                                     'coll prepare() before execute.')
         return False
 
-    def info(self, pp):
+    def info(self):
         """ pretty print recieve packet. """
         pass
 
@@ -182,32 +181,25 @@ class CmdInfo(CmdServo):
 
     def execute(self, ser):
         ser.write(self.packet)
-        self.recv.extend(list(ser.read(7)))
+        self.recv = list(ser.read(7))
         self.recv.extend(list(ser.read(self.recv[5])))
-        self.recv.append(ser.read())  # checksum
+        self.recv.extend(list(ser.read()))  # checksum
+        self.logger.debug(self.recv)
         return self.check_return_packet(self.recv)
 
-    def info(self, pp):
-        self.logger.debug('Returned packet:')
+    def info(self):
         sum = self.recv[2]
         for value in self.recv[3:-1]:
             sum ^= value
-        self.logger.debug('calculate checksum:{0}'.format(sum))
-        self.logger.debug('recv checksum:{0}'.format(self.recv[-1]))
-        if sum == ord(self.recv[-1]):
-            self.logger.debug('checksum OK')
-        else:
-            self.logger.debug('checksum NG')
+        self.logger.debug('checksum(recv, calc):{0},{1}'
+                          .format(self.recv[-1], sum))
         self.info_short_packet_header(self.recv)
         if self.section == 3:
             self.info_section_3(self.recv[7:-1])
         elif self.section == 5:
             self.info_section_5(self.recv[7:-1])
         else:
-            self.logger.debug("Data:", end='')
-            self.logger.debug(pp.pformat(self.recv[7:-1]))
-        self.logger.debug('{0}:{1:#x}'.format('Checksum',
-                                              ord(self.recv[-1])))
+            self.logger.debug(self.recv[7:-1])
 
 
 class CmdAck(CmdServo):
@@ -228,16 +220,16 @@ class CmdAck(CmdServo):
     def execute(self, ser):
         super(CmdAck, self).execute()
         ser.write(self.packet)
-        self.recv.append(ser.read())
+        self.recv = list(ser.read())
+        self.logger.debug(self.recv)
         if len(self.recv) == 0:
             return False
-        if self.recv[0] != bytes([7]):
+        if self.recv[0] != 7:
             return False
         return True
 
-    def info(self, pp):
-        self.logger.debug('ACK(\\x07):', end='')
-        self.logger.debug(pp.pformat(self.recv))
+    def info(self):
+        self.logger.debug('ACK(\\x07):{0}'.format(self.recv))
 
 
 class CmdSetId(CmdServo):
@@ -260,7 +252,7 @@ class CmdSetId(CmdServo):
         super(CmdSetId, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -284,7 +276,7 @@ class CmdFlash(CmdServo):
         ser.write(self.packet)
         time.sleep(1)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -308,7 +300,7 @@ class CmdReboot(CmdServo):
         ser.write(self.packet)
         time.sleep(3)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -316,6 +308,15 @@ class CmdAngle(CmdServo):
     """ Goal Angle and Goal Time. Please Torque ON first!"""
 
     def prepare(self, servo_id, degree, speed):
+        """servo_id is 1 or 2.
+        degree(per 0.1) -1500(-150.0) - 1500(150.0)
+        Limiting degree by;
+        08 08H DCH CW Angle Limit L 右リミット角度 RW
+        09 09H 05H CW Angle Limit H 右リミット角度 RW
+        10 0AH 24H CCW Angle Limit L 左リミット角度 RW
+        11 0BH FAH CCW Angle Limit H 左リミット角度 RW
+        speed(per 10msec); 0 to 16383(163.83sec)
+        """
         degree_packet = list(degree.to_bytes(2, 'little', signed=True))
         speed_packet = list(speed.to_bytes(2, 'little', signed=True))
         self.packet = array.array('B',
@@ -335,7 +336,7 @@ class CmdAngle(CmdServo):
         super(CmdAngle, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -359,7 +360,7 @@ class CmdMaxTorque(CmdServo):
         super(CmdMaxTorque, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -392,7 +393,7 @@ class CmdTorque(CmdServo):
         super(CmdTorque, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -417,7 +418,7 @@ class CmdCwLimit(CmdServo):
         super(CmdCwLimit, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -442,7 +443,7 @@ class CmdCcwLimit(CmdServo):
         super(CmdCcwLimit, self).execute()
         ser.write(self.packet)
 
-    def info(self, pp):
+    def info(self):
         pass
 
 
@@ -566,11 +567,9 @@ def main():
     else:
         parser.exit(0, 'no specifiy command, nothing to do.\n')
 
-    pp = pprint.PrettyPrinter(indent=4)
     if args.dryrun:
         print("====== DRY RUN. NOT EXECUTING =====")
-        print("generate packet:", end='')
-        pp.pprint(cmd.packet)
+        print('generate packet:{0}'.format(cmd.packet))
     else:
         ser = serial.Serial(args.port, args.baud, timeout=1)
         if args.ack and args.subparser_name != 'ack':
@@ -581,7 +580,7 @@ def main():
                 print("NO EXIST Servo ID's Servo. please check servo ID.")
                 sys.exit(1)
         cmd.execute(ser)
-        cmd.info(pp)
+        cmd.info()
         ser.close()
 
 
