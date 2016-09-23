@@ -63,8 +63,8 @@ class TestServos(unittest.TestCase):
 
     def testDetach(self):
         for i in [0, 1]:
+            pwm = PwmServo.PwmDetach()
             with self.subTest(i=i):
-                pwm = PwmServo.PwmDetach()
                 pwm.prepare(i)
                 self.assertTrue(pwm.execute(self.ser))
                 buf = bytes(pwm.recv).decode('utf-8')
@@ -166,6 +166,30 @@ class TestServos(unittest.TestCase):
                 sleep(2)
                 d.prepare(sv)
                 self.assertTrue(d.execute(self.ser))
+
+    def test_init_pos_0(self):
+        a = PwmServo.PwmAttach()
+        d = PwmServo.PwmDetach()
+        pwm = PwmServo.PwmPulse()
+        sv = 0
+        a.prepare(sv)
+        self.assertTrue(a.execute(self.ser))
+        pwm.prepare(sv, 1900)
+        self.assertTrue(pwm.execute(self.ser))
+        d.prepare(sv)
+        self.assertTrue(d.execute(self.ser))
+
+    def test_init_pos_1(self):
+        a = PwmServo.PwmAttach()
+        d = PwmServo.PwmDetach()
+        pwm = PwmServo.PwmPulse()
+        sv = 1
+        a.prepare(sv)
+        self.assertTrue(a.execute(self.ser))
+        pwm.prepare(sv, 1800)
+        self.assertTrue(pwm.execute(self.ser))
+        d.prepare(sv)
+        self.assertTrue(d.execute(self.ser))
 
 class TestServosNoWait(unittest.TestCase):
     """IF enable soft-reset, follow tests alway FAIL."""
