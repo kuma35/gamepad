@@ -9,7 +9,7 @@ import CmdServo
 com_port = '/dev/ttyFT485R'
 com_boud = 115200
 com_timeout = 1
-log_file = 'test_CmdServo.log'
+log_file = 'log/test_CmdServo.log'
 
 
 class TestExistServos(unittest.TestCase):
@@ -146,7 +146,15 @@ class TestMove(unittest.TestCase):
         self.sh.close();
         self.logger.removeHandler(self.sh)
 
-    def test_move_slow(self):
+    def no_test_move_slow(self):
+        """Testing be able to slow move.
+        Result: Over 300(3.00sec), lacking torque, can not move start.
+        和文：どのぐらい遅く動かせるかテスト。
+        300(3.00sec)以上を指定すると動かなかった。遅く動かすためにサーボ
+        モータへの出力を下げるのかな？
+        また同時に動作途中に動作をキャンセルできるかどうかテスト→NG。
+        Present_PosionをGoal_Posisonに代入すれば動作をキャンセルできるか
+        と思ったが、Present_Posionの更新は動作終了時に行っているようだ。"""
         Sv = 2
         info = CmdServo.CmdInfo(self.logger)
         info.prepare(Sv,section=5)
@@ -166,6 +174,87 @@ class TestMove(unittest.TestCase):
         sleep(10)
         trq.prepare(Sv, 'off')
         trq.execute(self.ser)
+
+    def test_kamae(self):
+        """Testing 'kamae' form.
+        0. Initial pos Sv1:90deg, Sv2:-90deg(both torque off)
+        1. torque off CmdServo2.
+        2. torque on CmdServo1.
+        3. move CmdServo1 to 300(30.0 degree), speed 300
+        4. torque on CmdServo2.(Beam and Arm -60deg)
+        5. move CmdServo1 to -30
+        6. stay hold and you see mjpg-stremaer shapshot.
+        """
+        c = CmdServo.CmdAngle(self.logger)
+        t = CmdServo.CmdTorque(self.logger)
+        t.prepare(2, 'off')
+        t.execute(self.ser)
+        t.prepare(1, 'on')
+        t.execute(self.ser)
+        c.prepare(1, 300, 300)
+        c.execute(self.ser)
+        sleep(3)
+        t.prepare(2, 'on')
+        t.execute(self.ser)
+        c.prepare(1, -300, 300)
+        c.execute(self.ser)
+
+    def test_kamae3(self):
+        """Testing 'kamae' form.
+        0. Initial pos Sv1:90deg, Sv2:-90deg(both torque off)
+        1. torque off CmdServo2.
+        2. torque on CmdServo1.
+        3. move CmdServo1 to 300(30.0 degree), speed 300
+        4. torque on CmdServo2.(Beam and Arm -60deg)
+        5. move CmdServo1 to -30
+        6. stay hold and you see mjpg-stremaer shapshot.
+        """
+        c = CmdServo.CmdAngle(self.logger)
+        t = CmdServo.CmdTorque(self.logger)
+        t.prepare(1, 'on')
+        t.execute(self.ser)
+        c.prepare(1, 0, 0)
+        c.execute(self.ser)
+
+    def test_beam(self):
+        """Testing arm(CmdServo id 1)."""
+        c = CmdServo.CmdAngle(self.logger)
+        t = CmdServo.CmdTorque(self.logger)
+        t.prepare(1, 'on')
+        t.execute(self.ser)
+        c.prepare(1, 300, 300)
+        c.execute(self.ser)
+
+    def test_arm(self):
+        """Testing arm(CmdServo id 2)."""
+        c = CmdServo.CmdAngle(self.logger)
+        t = CmdServo.CmdTorque(self.logger)
+        t.prepare(2, 'on')
+        t.execute(self.ser)
+        c.prepare(2, -300, 0)
+        c.execute(self.ser)
+
+    def test_naore(self):
+        """Testing 'naore' form.
+        """
+        c = CmdServo.CmdAngle(self.logger)
+        t = CmdServo.CmdTorque(self.logger)
+        c.prepare(1, 900, 0)
+        c.execute(self.ser)
+        sleep(3)
+        t.prepare(2, 'off')
+        t.execute(self.ser)
+        t.prepare(1, 'off')
+        t.execute(self.ser)
+
+    def test_datsuryoku(self):
+        """Testing 'naore' form.
+        """
+        t = CmdServo.CmdTorque(self.logger)
+        t.prepare(2, 'off')
+        t.execute(self.ser)
+        t.prepare(1, 'off')
+        t.execute(self.ser)
 
 if __name__ == '__main__':
     unittest.main()
