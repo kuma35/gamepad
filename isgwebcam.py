@@ -169,7 +169,7 @@ if __name__ == '__main__':
                           '%(filename)s:%(lineno)d - '
                           '%(funcName)s - '
                           '%(message)s')
-    sh = FileHandler('webcam4.log')
+    sh = FileHandler('log/webcam4.log')
     sh.setLevel(DEBUG)
     sh.setFormatter(formatter)
     logger.setLevel(DEBUG)
