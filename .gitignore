@@ -13,3 +13,7 @@ log/*
 arduino/PwmServo/.build/*
 arduino/PwmServo/lib/*
 arduino/PwmServo/src/build-*
+arduino/AfmStepper/.build/*
+arduino/AfmStepper/lib/*
+arduino/AfmStepper/src/build-uno/*
+
